@@ -1,54 +1,63 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Flipbook Demo</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-  <script src="turn.min.js"></script>
+  <meta charset="UTF-8">
+  <title>Flipbook</title>
   <style>
+    body {
+      background: #f0f0f0;
+      font-family: sans-serif;
+    }
+
     #flipbook {
-      width: 800px; height: 500px; margin: 40px auto;
+      width: 800px;
+      height: 500px;
+      margin: 40px auto;
     }
+
     .page {
-      width: 400px; height: 500px;
-      background: #3498db; color: white;
+      width: 400px;
+      height: 500px;
+      background: #3498db;
+      color: white;
       font-size: 40px;
-      display: flex; justify-content: center; align-items: center;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
       user-select: none;
-      box-shadow: 0 0 5px rgba(0,0,0,0.3);
     }
+
     .page:nth-child(even) {
       background: #2ecc71;
     }
   </style>
+
+  <!-- Load jQuery -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+
+  <!-- Load Turn.js locally -->
+  <script src="turn.min.js"></script>
 </head>
 <body>
 
-<div id="flipbook">
-  <div class="page">Cover</div>
-  <div class="page">Page 1</div>
-  <div class="page">Page 2</div>
-  <div class="page">Page 3</div>
-  <div class="page">Page 4</div>
-  <div class="page">Page 5</div>
-  <div class="page">Page 6</div>
-  <div class="page">Page 7</div>
-  <div class="page">Page 8</div>
-  <div class="page">Page 9</div>
-</div>
+  <div id="flipbook">
+    <div class="page">Cover</div>
+    <div class="page">Page 1</div>
+    <div class="page">Page 2</div>
+    <div class="page">Page 3</div>
+    <div class="page">Page 4</div>
+    <div class="page">Page 5</div>
+    <div class="page">Page 6</div>
+    <div class="page">Page 7</div>
+    <div class="page">Page 8</div>
+    <div class="page">Page 9</div>
+  </div>
 
-<script>
-  $(function() {
-    $("#flipbook").turn({
-      width: 800,
-      height: 500,
-      autoCenter: true,
-      elevation: 50,
-      gradients: true,
-      duration: 1000
-    });
-  });
-</script>
-
-</body>
-</html>
+  <script>
+    $(function () {
+      $('#flipbook').turn({
+        width: 800,
+        height: 500,
+        autoCenter: true,
+        e
