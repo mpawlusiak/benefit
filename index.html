@@ -1,15 +1,31 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Flipbook Test</title>
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/turn.js/3/turn.min.js"></script>
+  <meta charset="UTF-8">
+  <title>Flipbook</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/blasten/turn.js@4/turn.min.js"></script>
   <style>
-    body { margin:0; background:#333; overflow:hidden; }
-    #flipbook { width:800px; height:500px; margin:40px auto; }
-    #flipbook .page { width:100%; height:100%; background:white; display:flex; align-items:center; justify-content:center; font-size:32px; }
-    #flipbook .page-wrapper { perspective:2000px; }
+    body {
+      margin: 0;
+      background: #333;
+      overflow: hidden;
+    }
+    #flipbook {
+      width: 800px;
+      height: 500px;
+      margin: 40px auto;
+    }
+    .page {
+      width: 400px;
+      height: 500px;
+      background: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      box-shadow: 0 0 4px rgba(0,0,0,0.2);
+    }
   </style>
 </head>
 <body>
@@ -20,12 +36,12 @@
   <div class="page">Page 2</div>
   <div class="page">Page 3</div>
   <div class="page">Page 4</div>
-  <div class="page">The End</div>
+  <div class="page">Page 5</div>
 </div>
 
 <script>
   $(function(){
-    $("#flipbook").turn({
+    $('#flipbook').turn({
       width: 800,
       height: 500,
       autoCenter: true
