@@ -2,34 +2,24 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Flipbook Demo</title>
-
-  <!-- Load jQuery first -->
+  <title>Flipbook Test</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-
-  <!-- Load Turn.js (v4) -->
   <script src="https://cdn.jsdelivr.net/gh/blasten/turn.js@4/turn.min.js"></script>
-
   <style>
     #flipbook {
-      width: 800px;
-      height: 500px;
-      margin: 40px auto;
+      width: 800px; height: 500px; margin: 40px auto;
     }
     .page {
-      width: 400px;
-      height: 500px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
+      width: 400px; height: 500px;
+      background: #3498db; color: white;
       font-size: 40px;
-      color: white;
+      display: flex; justify-content: center; align-items: center;
       user-select: none;
       box-shadow: 0 0 5px rgba(0,0,0,0.3);
     }
-    /* Different background colors for pages */
-    .page:nth-child(odd) { background: #3498db; }
-    .page:nth-child(even) { background: #2ecc71; }
+    .page:nth-child(even) {
+      background: #2ecc71;
+    }
   </style>
 </head>
 <body>
