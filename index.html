@@ -11,57 +11,54 @@
   <script src="https://cdn.jsdelivr.net/gh/blasten/turn.js@4/turn.min.js"></script>
 
   <style>
-    /* Container for the flipbook */
     #flipbook {
       width: 800px;
       height: 500px;
       margin: 40px auto;
     }
-
-    /* Each individual page */
     .page {
       width: 400px;
       height: 500px;
-      background: white;
-      border: 1px solid #ccc;
       display: flex;
       justify-content: center;
       align-items: center;
-      font-size: 32px;
-      box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
-      user-select: none; /* prevent text selection during drag */
+      font-size: 40px;
+      color: white;
+      user-select: none;
+      box-shadow: 0 0 5px rgba(0,0,0,0.3);
     }
+    /* Different background colors for pages */
+    .page:nth-child(odd) { background: #3498db; }
+    .page:nth-child(even) { background: #2ecc71; }
   </style>
 </head>
 <body>
 
-  <!-- Flipbook container -->
-  <div id="flipbook">
-    <div class="page">Cover</div>
-    <div class="page">Page 1</div>
-    <div class="page">Page 2</div>
-    <div class="page">Page 3</div>
-    <div class="page">Page 4</div>
-    <div class="page">Page 5</div>
-    <div class="page">Page 6</div>
-    <div class="page">Page 7</div>
-    <div class="page">Page 8</div>
-    <div class="page">Page 9</div>
-  </div>
+<div id="flipbook">
+  <div class="page">Cover</div>
+  <div class="page">Page 1</div>
+  <div class="page">Page 2</div>
+  <div class="page">Page 3</div>
+  <div class="page">Page 4</div>
+  <div class="page">Page 5</div>
+  <div class="page">Page 6</div>
+  <div class="page">Page 7</div>
+  <div class="page">Page 8</div>
+  <div class="page">Page 9</div>
+</div>
 
-  <script>
-    // Initialize the flipbook after DOM loads
-    $(function () {
-      $("#flipbook").turn({
-        width: 800,
-        height: 500,
-        autoCenter: true,
-        elevation: 50,
-        gradients: true,
-        duration: 1000
-      });
+<script>
+  $(function() {
+    $("#flipbook").turn({
+      width: 800,
+      height: 500,
+      autoCenter: true,
+      elevation: 50,
+      gradients: true,
+      duration: 1000
     });
-  </script>
+  });
+</script>
 
 </body>
 </html>
