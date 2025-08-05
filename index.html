@@ -40,9 +40,33 @@
       width: 400px;
       height: 500px;
       background: transparent !important;
-      box-shadow: none !important;
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
       overflow: hidden;
       position: relative;
+      transition: transform 0.4s ease;
+    }
+
+    #flipbook .page.turning {
+      transform: scale(1.005) rotateY(1deg);
+    }
+
+    #flipbook .page::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 6px;
+      height: 100%;
+      background: linear-gradient(to right, rgba(0,0,0,0.08), transparent);
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    #flipbook .page:nth-child(even)::after {
+      left: auto;
+      right: 0;
+      background: linear-gradient(to left, rgba(0,0,0,0.08), transparent);
     }
 
     #flipbook .page img {
@@ -52,28 +76,9 @@
       display: block;
       transform-origin: left center;
       transition: transform 0.3s ease;
-    }
-
-    #flipbook .page::before {
-      content: "";
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 20px;
-      height: 100%;
-      background: linear-gradient(to right, rgba(0,0,0,0.15), transparent);
-      pointer-events: none;
-      z-index: 2;
-    }
-
-    #flipbook .page:nth-child(even)::before {
-      left: auto;
-      right: 0;
-      background: linear-gradient(to left, rgba(0,0,0,0.15), transparent);
-    }
-
-    #flipbook .page.turning img {
-      transform: scaleX(0.98) skewY(0.5deg);
+      image-rendering: auto;
+      backface-visibility: hidden;
+      transform-style: preserve-3d;
     }
 
     .nav-arrow {
@@ -149,40 +154,40 @@
     </svg>
   </div>
 
-<script>
-  let isTurning = false;
+  <script>
+    let isTurning = false;
 
-  $(function() {
-    $('#flipbook').turn({
-      width: 800,
-      height: 500,
-      autoCenter: true,
-      duration: 1200,
-      gradients: true,
-      elevation: 50,
-      when: {
-        turning: function() {
-          isTurning = true;
-        },
-        turned: function() {
-          isTurning = false;
+    $(function() {
+      $('#flipbook').turn({
+        width: 800,
+        height: 500,
+        autoCenter: true,
+        duration: 1200,
+        gradients: true,
+        elevation: 50,
+        when: {
+          turning: function() {
+            isTurning = true;
+          },
+          turned: function() {
+            isTurning = false;
+          }
         }
-      }
-    });
+      });
 
-    $('#prevBtn').click(function() {
-      if (!isTurning) {
-        $('#flipbook').turn('previous');
-      }
-    });
+      $('#prevBtn').click(function() {
+        if (!isTurning) {
+          $('#flipbook').turn('previous');
+        }
+      });
 
-    $('#nextBtn').click(function() {
-      if (!isTurning) {
-        $('#flipbook').turn('next');
-      }
+      $('#nextBtn').click(function() {
+        if (!isTurning) {
+          $('#flipbook').turn('next');
+        }
+      });
     });
-  });
-</script>
+  </script>
 
 </body>
 </html>
