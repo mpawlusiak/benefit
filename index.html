@@ -25,9 +25,6 @@
       width: 800px;
       height: 500px;
       background: transparent !important;
-      will-change: transform;
-      backface-visibility: hidden;
-      transform-style: preserve-3d;
     }
 
     #flipbook .page {
@@ -37,9 +34,6 @@
       box-shadow: none !important;
       overflow: hidden;
       position: relative;
-      will-change: transform;
-      backface-visibility: hidden;
-      transform-style: preserve-3d;
     }
 
     #flipbook .page img {
@@ -49,9 +43,6 @@
       display: block;
       transform-origin: left center;
       transition: transform 0.3s ease;
-      will-change: transform;
-      backface-visibility: hidden;
-      transform-style: preserve-3d;
     }
 
     #flipbook .page::before {
@@ -153,8 +144,8 @@
         width: 800,
         height: 500,
         autoCenter: true,
-        duration: 600,
-        gradients: false,
+        duration: 1200,
+        gradients: true,
         elevation: 50,
         when: {
           start: function(e, pageObj) {
