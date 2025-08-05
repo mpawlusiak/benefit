@@ -18,24 +18,50 @@
       align-items: center;
       height: 100vh;
       margin: 0;
-      position: relative;
     }
     #flipbook {
       width: 800px;
       height: 500px;
+      position: relative;
     }
     #flipbook .page {
       width: 400px;
       height: 500px;
       background: white;
       box-shadow: 0 0 5px rgba(0,0,0,0.3);
+      position: relative;
+      overflow: hidden;
     }
     #flipbook .page img {
       width: 100%;
       height: 100%;
       object-fit: cover;
       display: block;
+      transform-origin: left center;
+      transition: transform 0.3s ease;
     }
+
+    /* Gradient shading on page edges */
+    #flipbook .page::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0;
+      width: 20px; height: 100%;
+      background: linear-gradient(to right, rgba(0,0,0,0.15), transparent);
+      pointer-events: none;
+      z-index: 2;
+    }
+    #flipbook .page:nth-child(even)::before {
+      left: auto;
+      right: 0;
+      background: linear-gradient(to left, rgba(0,0,0,0.15), transparent);
+    }
+
+    /* Curl effect while turning */
+    #flipbook .page.turning img {
+      transform: scaleX(0.98) skewY(0.5deg);
+    }
+
     /* Arrow buttons */
     .arrow {
       position: absolute;
@@ -48,15 +74,42 @@
       cursor: pointer;
       user-select: none;
       z-index: 100;
+      opacity: 0;
+      transition: opacity 0.3s ease, background 0.3s ease;
     }
     .arrow:hover {
       background: rgba(0, 0, 0, 0.6);
     }
+    #flipbook:hover .arrow {
+      opacity: 1;
+    }
     .arrow-left {
-      left: 10px;
+      left: -50px;
     }
     .arrow-right {
-      right: 10px;
+      right: -50px;
+    }
+
+    /* Mobile-friendly larger arrows */
+    @media (max-width: 900px) {
+      #flipbook {
+        width: 100%;
+        height: auto;
+      }
+      #flipbook .page {
+        width: 50%;
+        height: auto;
+      }
+      .arrow {
+        font-size: 50px;
+        padding: 15px;
+      }
+      .arrow-left {
+        left: -40px;
+      }
+      .arrow-right {
+        right: -40px;
+      }
     }
   </style>
 </head>
@@ -73,18 +126,29 @@
     <div class="page"><img src="pages/page_8.jpg" alt="Page 8"></div>
     <div class="page"><img src="pages/page_9.jpg" alt="Page 9"></div>
     <div class="page"><img src="pages/page_10.jpg" alt="Page 10"></div>
-  </div>
 
-  <!-- Navigation Arrows -->
-  <div class="arrow arrow-left">&#10094;</div>
-  <div class="arrow arrow-right">&#10095;</div>
+    <!-- Navigation Arrows -->
+    <div class="arrow arrow-left">&#10094;</div>
+    <div class="arrow arrow-right">&#10095;</div>
+  </div>
 
   <script>
     $(function() {
       $('#flipbook').turn({
         width: 800,
         height: 500,
-        autoCenter: true
+        autoCenter: true,
+        duration: 1200, // smoother animation
+        gradients: true,
+        elevation: 50,
+        when: {
+          start: function(e, pageObj) {
+            $(pageObj).addClass('turning');
+          },
+          end: function(e, pageObj) {
+            $(pageObj).removeClass('turning');
+          }
+        }
       });
 
       $('.arrow-left').click(function() {
