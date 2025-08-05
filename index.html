@@ -1,11 +1,13 @@
+<!DOCTYPE html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <title>beNeFit XIII Booklet</title>
 
-  <!-- jQuery must load first -->
+  <!-- Load jQuery first -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
-  <!-- Turn.js from a reliable CDN -->
+  <!-- Load Turn.js (version 3 works reliably on CDNJS) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/turn.js/3/turn.min.js"></script>
 
   <style>
@@ -29,6 +31,7 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
+      display: block;
     }
   </style>
 </head>
@@ -47,15 +50,19 @@
     <div class="page"><img src="pages/page_10.jpg" alt="Page 10"></div>
   </div>
 
-  <!-- Initialize flipbook AFTER libraries load -->
   <script>
     $(function() {
-      $('#flipbook').turn({
-        width: 800,
-        height: 500,
-        autoCenter: true
-      });
+      if (typeof $.fn.turn === "function") {
+        $('#flipbook').turn({
+          width: 800,
+          height: 500,
+          autoCenter: true
+        });
+      } else {
+        console.error("Turn.js failed to load. Check the script path.");
+      }
     });
   </script>
 
 </body>
+</html>
