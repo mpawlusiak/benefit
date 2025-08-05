@@ -18,19 +18,6 @@
       width: 100%;
       height: 100%;
       background: transparent;
-      will-change: auto !important;
-      backface-visibility: hidden;
-      transform-style: preserve-3d;
-    }
-
-    #flipbook-wrapper {
-      transform: scale(0.99);
-      transform-origin: top left;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      width: 100%;
-      height: 100%;
     }
 
     #flipbook-container {
@@ -38,16 +25,15 @@
       height: 500px;
       overflow: hidden;
       position: relative;
-      backface-visibility: hidden;
-      transform-style: preserve-3d;
+      margin: auto;
+      top: 50%;
+      transform: translateY(-50%);
     }
 
     #flipbook {
       width: 800px;
       height: 500px;
       background: transparent !important;
-      backface-visibility: hidden;
-      transform-style: preserve-3d;
     }
 
     #flipbook .page {
@@ -58,8 +44,6 @@
       overflow: hidden;
       position: relative;
       transition: box-shadow 0.3s ease;
-      backface-visibility: hidden;
-      transform-style: preserve-3d;
     }
 
     #flipbook .page img {
@@ -144,20 +128,18 @@
     </svg>
   </div>
 
-  <div id="flipbook-wrapper">
-    <div id="flipbook-container">
-      <div id="flipbook">
-        <div class="page"><img src="pages/page_1.jpg" alt="Page 1"></div>
-        <div class="page"><img src="pages/page_2.jpg" alt="Page 2"></div>
-        <div class="page"><img src="pages/page_3.jpg" alt="Page 3"></div>
-        <div class="page"><img src="pages/page_4.jpg" alt="Page 4"></div>
-        <div class="page"><img src="pages/page_5.jpg" alt="Page 5"></div>
-        <div class="page"><img src="pages/page_6.jpg" alt="Page 6"></div>
-        <div class="page"><img src="pages/page_7.jpg" alt="Page 7"></div>
-        <div class="page"><img src="pages/page_8.jpg" alt="Page 8"></div>
-        <div class="page"><img src="pages/page_9.jpg" alt="Page 9"></div>
-        <div class="page"><img src="pages/page_10.jpg" alt="Page 10"></div>
-      </div>
+  <div id="flipbook-container">
+    <div id="flipbook">
+      <div class="page"><img src="pages/page_1.jpg" alt="Page 1"></div>
+      <div class="page"><img src="pages/page_2.jpg" alt="Page 2"></div>
+      <div class="page"><img src="pages/page_3.jpg" alt="Page 3"></div>
+      <div class="page"><img src="pages/page_4.jpg" alt="Page 4"></div>
+      <div class="page"><img src="pages/page_5.jpg" alt="Page 5"></div>
+      <div class="page"><img src="pages/page_6.jpg" alt="Page 6"></div>
+      <div class="page"><img src="pages/page_7.jpg" alt="Page 7"></div>
+      <div class="page"><img src="pages/page_8.jpg" alt="Page 8"></div>
+      <div class="page"><img src="pages/page_9.jpg" alt="Page 9"></div>
+      <div class="page"><img src="pages/page_10.jpg" alt="Page 10"></div>
     </div>
   </div>
 
