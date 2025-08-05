@@ -4,10 +4,10 @@
   <meta charset="UTF-8">
   <title>beNeFit XIII Booklet</title>
 
-  <!-- Load jQuery first -->
+  <!-- jQuery -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
-  <!-- Load Turn.js -->
+  <!-- Turn.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/turn.js/3/turn.min.js"></script>
 
   <style>
@@ -18,13 +18,14 @@
       align-items: center;
       height: 100vh;
       margin: 0;
+      position: relative;
     }
     #flipbook {
       width: 800px;
       height: 500px;
     }
     #flipbook .page {
-      width: 400px;  /* half the book width */
+      width: 400px;
       height: 500px;
       background: white;
       box-shadow: 0 0 5px rgba(0,0,0,0.3);
@@ -34,6 +35,28 @@
       height: 100%;
       object-fit: cover;
       display: block;
+    }
+    /* Arrow buttons */
+    .arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 40px;
+      background: rgba(0, 0, 0, 0.4);
+      color: white;
+      padding: 10px;
+      cursor: pointer;
+      user-select: none;
+      z-index: 100;
+    }
+    .arrow:hover {
+      background: rgba(0, 0, 0, 0.6);
+    }
+    .arrow-left {
+      left: 10px;
+    }
+    .arrow-right {
+      right: 10px;
     }
   </style>
 </head>
@@ -52,17 +75,25 @@
     <div class="page"><img src="pages/page_10.jpg" alt="Page 10"></div>
   </div>
 
+  <!-- Navigation Arrows -->
+  <div class="arrow arrow-left">&#10094;</div>
+  <div class="arrow arrow-right">&#10095;</div>
+
   <script>
     $(function() {
-      if (typeof $.fn.turn === "function") {
-        $('#flipbook').turn({
-          width: 800,
-          height: 500,
-          autoCenter: true
-        });
-      } else {
-        console.error("Turn.js failed to load. Check the script path.");
-      }
+      $('#flipbook').turn({
+        width: 800,
+        height: 500,
+        autoCenter: true
+      });
+
+      $('.arrow-left').click(function() {
+        $('#flipbook').turn('previous');
+      });
+
+      $('.arrow-right').click(function() {
+        $('#flipbook').turn('next');
+      });
     });
   </script>
 
