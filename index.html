@@ -7,7 +7,7 @@
   <!-- Load jQuery first -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
-  <!-- Load Turn.js (version 3 works reliably on CDNJS) -->
+  <!-- Load Turn.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/turn.js/3/turn.min.js"></script>
 
   <style>
@@ -24,10 +24,12 @@
       height: 500px;
     }
     #flipbook .page {
+      width: 400px;  /* half the book width */
+      height: 500px;
       background: white;
       box-shadow: 0 0 5px rgba(0,0,0,0.3);
     }
-    img {
+    #flipbook .page img {
       width: 100%;
       height: 100%;
       object-fit: cover;
