@@ -149,42 +149,40 @@
     </svg>
   </div>
 
-  <script>
-    let isTurning = false;
+<script>
+  let isTurning = false;
 
-    $(function() {
-      $('#flipbook').turn({
-        width: 800,
-        height: 500,
-        autoCenter: true,
-        duration: 1200,
-        gradients: true,
-        elevation: 50,
-        when: {
-          start: function(e, pageObj) {
-            isTurning = true;
-            $(pageObj).addClass('turning');
-          },
-          end: function(e, pageObj) {
-            isTurning = false;
-            $(pageObj).removeClass('turning');
-          }
+  $(function() {
+    $('#flipbook').turn({
+      width: 800,
+      height: 500,
+      autoCenter: true,
+      duration: 1200,
+      gradients: true,
+      elevation: 50,
+      when: {
+        turning: function() {
+          isTurning = true;
+        },
+        turned: function() {
+          isTurning = false;
         }
-      });
-
-      $('#prevBtn').click(function() {
-        if (!isTurning) {
-          $('#flipbook').turn('previous');
-        }
-      });
-
-      $('#nextBtn').click(function() {
-        if (!isTurning) {
-          $('#flipbook').turn('next');
-        }
-      });
+      }
     });
-  </script>
+
+    $('#prevBtn').click(function() {
+      if (!isTurning) {
+        $('#flipbook').turn('previous');
+      }
+    });
+
+    $('#nextBtn').click(function() {
+      if (!isTurning) {
+        $('#flipbook').turn('next');
+      }
+    });
+  });
+</script>
 
 </body>
 </html>
