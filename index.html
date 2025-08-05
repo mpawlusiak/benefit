@@ -150,6 +150,8 @@
   </div>
 
   <script>
+    let isTurning = false;
+
     $(function() {
       $('#flipbook').turn({
         width: 800,
@@ -160,20 +162,26 @@
         elevation: 50,
         when: {
           start: function(e, pageObj) {
+            isTurning = true;
             $(pageObj).addClass('turning');
           },
           end: function(e, pageObj) {
+            isTurning = false;
             $(pageObj).removeClass('turning');
           }
         }
       });
 
       $('#prevBtn').click(function() {
-        $('#flipbook').turn('previous');
+        if (!isTurning) {
+          $('#flipbook').turn('previous');
+        }
       });
 
       $('#nextBtn').click(function() {
-        $('#flipbook').turn('next');
+        if (!isTurning) {
+          $('#flipbook').turn('next');
+        }
       });
     });
   </script>
