@@ -67,7 +67,7 @@
       transform: scaleX(0.98) skewY(0.5deg);
     }
 
-    /* Arrows always visible */
+    /* Arrows always visible and inside book edges */
     .arrow {
       position: absolute;
       top: 50%;
@@ -78,7 +78,7 @@
       padding: 10px;
       cursor: pointer;
       user-select: none;
-      z-index: 100;
+      z-index: 200; /* High so it's always above pages */
       transition: background 0.3s ease;
     }
 
@@ -87,11 +87,11 @@
     }
 
     .arrow-left {
-      left: -50px;
+      left: 5px; /* inside the left page edge */
     }
 
     .arrow-right {
-      right: -50px;
+      right: 5px; /* inside the right page edge */
     }
 
     /* Mobile tweaks */
@@ -109,10 +109,10 @@
         padding: 15px;
       }
       .arrow-left {
-        left: -40px;
+        left: 5px;
       }
       .arrow-right {
-        right: -40px;
+        right: 5px;
       }
     }
   </style>
