@@ -1,5 +1,3 @@
-<!DOCTYPE html>
-<html lang="en">
 <head>
   <meta charset="UTF-8">
   <title>beNeFit XIII Booklet</title>
@@ -7,8 +5,8 @@
   <!-- jQuery must load first -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
-  <!-- Turn.js library -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/turn.js/4.1.0/turn.min.js"></script>
+  <!-- Turn.js from a reliable CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/turn.js/3/turn.min.js"></script>
 
   <style>
     body {
@@ -49,8 +47,9 @@
     <div class="page"><img src="pages/page_10.jpg" alt="Page 10"></div>
   </div>
 
+  <!-- Initialize flipbook AFTER libraries load -->
   <script>
-    $(document).ready(function() {
+    $(function() {
       $('#flipbook').turn({
         width: 800,
         height: 500,
@@ -60,4 +59,3 @@
   </script>
 
 </body>
-</html>
