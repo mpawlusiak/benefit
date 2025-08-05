@@ -1,177 +1,100 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>beNeFit XIII Booklet</title>
+<style>
+  body {
+    background: transparent;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    position: relative;
+  }
 
-  <!-- jQuery -->
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  #flipbook {
+    width: 800px;
+    height: 500px;
+  }
 
-  <!-- Turn.js -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/turn.js/3/turn.min.js"></script>
+  #flipbook .page {
+    width: 400px;
+    height: 500px;
+    background: transparent; /* Changed from white */
+    box-shadow: 0 0 5px rgba(0,0,0,0.3);
+    overflow: hidden;
+    position: relative;
+  }
 
-  <style>
-    body {
-      background: #f0f0f0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-      position: relative;
-    }
+  #flipbook .page img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transform-origin: left center;
+    transition: transform 0.3s ease;
+  }
 
-    #flipbook {
-      width: 800px;
-      height: 500px;
-    }
+  /* Gradient shading */
+  #flipbook .page::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 20px;
+    height: 100%;
+    background: linear-gradient(to right, rgba(0,0,0,0.15), transparent);
+    pointer-events: none;
+    z-index: 2;
+  }
 
-    #flipbook .page {
-      width: 400px;
-      height: 500px;
-      background: white;
-      box-shadow: 0 0 5px rgba(0,0,0,0.3);
-      overflow: hidden;
-      position: relative;
-    }
+  #flipbook .page:nth-child(even::before) {
+    left: auto;
+    right: 0;
+    background: linear-gradient(to left, rgba(0,0,0,0.15), transparent);
+  }
 
-    #flipbook .page img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-      transform-origin: left center;
-      transition: transform 0.3s ease;
-    }
+  #flipbook .page.turning img {
+    transform: scaleX(0.98) skewY(0.5deg);
+  }
 
-    /* Gradient shading */
-    #flipbook .page::before {
-      content: "";
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 20px;
-      height: 100%;
-      background: linear-gradient(to right, rgba(0,0,0,0.15), transparent);
-      pointer-events: none;
-      z-index: 2;
-    }
+  .nav-arrow {
+    position: fixed;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 50px;
+    height: 50px;
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    z-index: 1000;
+    transition: background 0.3s ease;
+  }
 
-    #flipbook .page:nth-child(even)::before {
-      left: auto;
-      right: 0;
-      background: linear-gradient(to left, rgba(0,0,0,0.15), transparent);
-    }
+  .nav-arrow:hover {
+    background: rgba(0, 0, 0, 0.6);
+  }
 
-    #flipbook .page.turning img {
-      transform: scaleX(0.98) skewY(0.5deg);
-    }
+  .arrow-left {
+    left: calc(50% - 460px);
+  }
 
-    /* Always visible navigation arrows */
-    .nav-arrow {
-      position: fixed;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 50px;
-      height: 50px;
-      background: rgba(0, 0, 0, 0.4);
-      border-radius: 50%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      cursor: pointer;
-      z-index: 1000;
-      transition: background 0.3s ease;
-    }
+  .arrow-right {
+    right: calc(50% - 460px);
+  }
 
-    .nav-arrow:hover {
-      background: rgba(0, 0, 0, 0.6);
-    }
+  .nav-arrow svg {
+    width: 24px;
+    height: 24px;
+    fill: white;
+  }
 
+  @media (max-width: 900px) {
     .arrow-left {
-      left: calc(50% - 460px); /* Positions to the left of book */
+      left: 10px;
     }
-
     .arrow-right {
-      right: calc(50% - 460px); /* Positions to the right of book */
+      right: 10px;
     }
-
-    /* Arrow icon styling */
-    .nav-arrow svg {
-      width: 24px;
-      height: 24px;
-      fill: white;
-    }
-
-    /* Mobile adjustments */
-    @media (max-width: 900px) {
-      .arrow-left {
-        left: 10px;
-      }
-      .arrow-right {
-        right: 10px;
-      }
-    }
-  </style>
-</head>
-<body>
-
-  <!-- Left Arrow -->
-  <div class="nav-arrow arrow-left" id="prevBtn">
-    <svg viewBox="0 0 24 24">
-      <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
-    </svg>
-  </div>
-
-  <!-- Flipbook -->
-  <div id="flipbook">
-    <div class="page"><img src="pages/page_1.jpg" alt="Page 1"></div>
-    <div class="page"><img src="pages/page_2.jpg" alt="Page 2"></div>
-    <div class="page"><img src="pages/page_3.jpg" alt="Page 3"></div>
-    <div class="page"><img src="pages/page_4.jpg" alt="Page 4"></div>
-    <div class="page"><img src="pages/page_5.jpg" alt="Page 5"></div>
-    <div class="page"><img src="pages/page_6.jpg" alt="Page 6"></div>
-    <div class="page"><img src="pages/page_7.jpg" alt="Page 7"></div>
-    <div class="page"><img src="pages/page_8.jpg" alt="Page 8"></div>
-    <div class="page"><img src="pages/page_9.jpg" alt="Page 9"></div>
-    <div class="page"><img src="pages/page_10.jpg" alt="Page 10"></div>
-  </div>
-
-  <!-- Right Arrow -->
-  <div class="nav-arrow arrow-right" id="nextBtn">
-    <svg viewBox="0 0 24 24">
-      <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/>
-    </svg>
-  </div>
-
-  <script>
-    $(function() {
-      $('#flipbook').turn({
-        width: 800,
-        height: 500,
-        autoCenter: true,
-        duration: 1200,
-        gradients: true,
-        elevation: 50,
-        when: {
-          start: function(e, pageObj) {
-            $(pageObj).addClass('turning');
-          },
-          end: function(e, pageObj) {
-            $(pageObj).removeClass('turning');
-          }
-        }
-      });
-
-      $('#prevBtn').click(function() {
-        $('#flipbook').turn('previous');
-      });
-
-      $('#nextBtn').click(function() {
-        $('#flipbook').turn('next');
-      });
-    });
-  </script>
-
-</body>
-</html>
+  }
+</style>
