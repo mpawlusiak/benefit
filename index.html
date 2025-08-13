@@ -11,6 +11,15 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/turn.js/3/turn.min.js"></script>
 
   <style>
+    :root {
+      /* Exact image/page dimensions (single page) */
+      --page-w: 525.6px;
+      --page-h: 792px;
+      /* Book = two pages side by side */
+      --book-w: calc(var(--page-w) * 2);
+      --book-h: var(--page-h);
+    }
+
     html, body {
       margin: 0;
       padding: 0;
@@ -20,25 +29,35 @@
       background: transparent;
     }
 
+    /* Outer container centers the scaled book and holds arrows */
     #flipbook-container {
-      width: 800px;
-      height: 500px;
-      overflow: hidden;
       position: relative;
-      margin: auto;
+      margin: 0 auto;
+      width: var(--book-w);
+      height: var(--book-h);
+      overflow: visible; /* allow arrows to sit just outside the book */
       top: 50%;
       transform: translateY(-50%);
     }
 
+    /* This inner wrapper is scaled responsively via JS */
+    #scale-wrap {
+      position: relative;
+      width: var(--book-w);
+      height: var(--book-h);
+      transform-origin: top center;
+      margin: 0 auto;
+    }
+
     #flipbook {
-      width: 800px;
-      height: 500px;
+      width: var(--book-w);
+      height: var(--book-h);
       background: transparent !important;
     }
 
     #flipbook .page {
-      width: 400px;
-      height: 500px;
+      width: var(--page-w);
+      height: var(--page-h);
       background: transparent !important;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
       overflow: hidden;
@@ -46,18 +65,18 @@
       transition: box-shadow 0.3s ease;
     }
 
+    /* Images should fill their page exactly; no cropping */
     #flipbook .page img {
       width: 100%;
       height: 100%;
-      object-fit: cover;
       display: block;
-      transform-origin: left center;
-      transition: transform 0.3s ease;
+      object-fit: fill; /* aspect matches the page; prevents top/bottom crop */
       image-rendering: auto;
       backface-visibility: hidden;
       transform-style: preserve-3d;
     }
 
+    /* Subtle inner edge shading for depth */
     #flipbook .page::before {
       content: "";
       position: absolute;
@@ -76,8 +95,9 @@
       background: linear-gradient(to left, rgba(0,0,0,0.05), transparent);
     }
 
+    /* Navigation arrows live alongside the container so they don't scale */
     .nav-arrow {
-      position: fixed;
+      position: absolute;
       top: 50%;
       transform: translateY(-50%);
       width: 50px;
@@ -90,19 +110,16 @@
       cursor: pointer;
       z-index: 1000;
       transition: background 0.3s ease;
+      user-select: none;
+      -webkit-user-select: none;
     }
 
     .nav-arrow:hover {
       background: rgba(0, 0, 0, 0.6);
     }
 
-    .arrow-left {
-      left: calc(50% - 460px);
-    }
-
-    .arrow-right {
-      right: calc(50% - 460px);
-    }
+    .arrow-left { left: -60px; }
+    .arrow-right { right: -60px; }
 
     .nav-arrow svg {
       width: 24px;
@@ -110,78 +127,120 @@
       fill: white;
     }
 
+    /* On narrow screens, keep arrows inside so they're always reachable */
     @media (max-width: 900px) {
-      .arrow-left {
-        left: 10px;
-      }
-      .arrow-right {
-        right: 10px;
-      }
+      .arrow-left { left: 10px; }
+      .arrow-right { right: 10px; }
     }
   </style>
 </head>
 <body>
 
-  <div class="nav-arrow arrow-left" id="prevBtn">
-    <svg viewBox="0 0 24 24">
-      <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
-    </svg>
-  </div>
-
   <div id="flipbook-container">
-    <div id="flipbook">
-      <div class="page"><img src="pages/page_1.jpg" alt="Page 1"></div>
-      <div class="page"><img src="pages/page_2.jpg" alt="Page 2"></div>
-      <div class="page"><img src="pages/page_3.jpg" alt="Page 3"></div>
-      <div class="page"><img src="pages/page_4.jpg" alt="Page 4"></div>
-      <div class="page"><img src="pages/page_5.jpg" alt="Page 5"></div>
-      <div class="page"><img src="pages/page_6.jpg" alt="Page 6"></div>
-      <div class="page"><img src="pages/page_7.jpg" alt="Page 7"></div>
-      <div class="page"><img src="pages/page_8.jpg" alt="Page 8"></div>
-      <div class="page"><img src="pages/page_9.jpg" alt="Page 9"></div>
-      <div class="page"><img src="pages/page_10.jpg" alt="Page 10"></div>
+    <div class="nav-arrow arrow-left" id="prevBtn" aria-label="Previous page">
+      <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
+        <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
+      </svg>
+    </div>
+
+    <!-- Scaled wrapper so the flipbook keeps exact aspect ratio but fits the viewport -->
+    <div id="scale-wrap">
+      <div id="flipbook">
+        <div class="page"><img src="pages/page_1.jpg" alt="Page 1"></div>
+        <div class="page"><img src="pages/page_2.jpg" alt="Page 2"></div>
+        <div class="page"><img src="pages/page_3.jpg" alt="Page 3"></div>
+        <div class="page"><img src="pages/page_4.jpg" alt="Page 4"></div>
+        <div class="page"><img src="pages/page_5.jpg" alt="Page 5"></div>
+        <div class="page"><img src="pages/page_6.jpg" alt="Page 6"></div>
+        <div class="page"><img src="pages/page_7.jpg" alt="Page 7"></div>
+        <div class="page"><img src="pages/page_8.jpg" alt="Page 8"></div>
+        <div class="page"><img src="pages/page_9.jpg" alt="Page 9"></div>
+        <div class="page"><img src="pages/page_10.jpg" alt="Page 10"></div>
+      </div>
+    </div>
+
+    <div class="nav-arrow arrow-right" id="nextBtn" aria-label="Next page">
+      <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
+        <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/>
+      </svg>
     </div>
   </div>
 
-  <div class="nav-arrow arrow-right" id="nextBtn">
-    <svg viewBox="0 0 24 24">
-      <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/>
-    </svg>
-  </div>
-
   <script>
-    let isTurning = false;
+    (function() {
+      const PAGE_W = 525.6;
+      const PAGE_H = 792;
+      const BOOK_W = PAGE_W * 2;
+      const BOOK_H = PAGE_H;
 
-    $(function() {
-      $('#flipbook').turn({
-        width: 800,
-        height: 500,
-        autoCenter: true,
-        duration: 1200,
-        gradients: true,
-        elevation: 50,
-        when: {
-          turning: function() {
-            isTurning = true;
-          },
-          turned: function() {
-            isTurning = false;
+      let isTurning = false;
+
+      function sizeBook() {
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+
+        // Keep a little breathing room so it never touches the browser edges
+        const sideGutter = 160;  // accounts for arrows + margin
+        const topBottomGutter = 40;
+
+        // Scale based on whichever constraint (width/height) is tighter
+        const scaleW = (vw - sideGutter) / BOOK_W;
+        const scaleH = (vh - topBottomGutter) / BOOK_H;
+        let scale = Math.min(scaleW, scaleH);
+
+        // Avoid absurd scaling
+        if (!isFinite(scale) || scale <= 0) scale = 1;
+        scale = Math.min(scale, 1); // don't upscale beyond 100% (optional)
+
+        // Apply scale and update container so arrows align to real edges
+        const container = document.getElementById('flipbook-container');
+        const wrap = document.getElementById('scale-wrap');
+        wrap.style.transform = 'scale(' + scale + ')';
+        container.style.width = (BOOK_W * scale) + 'px';
+        container.style.height = (BOOK_H * scale) + 'px';
+      }
+
+      function initTurn() {
+        $('#flipbook').turn({
+          width: BOOK_W,
+          height: BOOK_H,
+          autoCenter: true,
+          duration: 1200,
+          gradients: true,
+          elevation: 50,
+          when: {
+            turning: function() {
+              isTurning = true;
+            },
+            turned: function() {
+              isTurning = false;
+            }
           }
-        }
-      });
+        });
+      }
 
-      $('#prevBtn').click(function() {
-        if (!isTurning) {
-          $('#flipbook').turn('previous');
-        }
-      });
+      function bindNav() {
+        $('#prevBtn').on('click', function() {
+          if (!isTurning) $('#flipbook').turn('previous');
+        });
+        $('#nextBtn').on('click', function() {
+          if (!isTurning) $('#flipbook').turn('next');
+        });
 
-      $('#nextBtn').click(function() {
-        if (!isTurning) {
-          $('#flipbook').turn('next');
-        }
+        // Keyboard support
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'ArrowLeft') $('#flipbook').turn('previous');
+          if (e.key === 'ArrowRight') $('#flipbook').turn('next');
+        });
+      }
+
+      $(function() {
+        initTurn();
+        bindNav();
+        sizeBook();
+        window.addEventListener('resize', sizeBook);
       });
-    });
+    })();
   </script>
 
 </body>
