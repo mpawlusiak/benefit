@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>beNeFit XIII Booklet</title>
 
   <!-- jQuery -->
@@ -11,133 +11,98 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/turn.js/3/turn.min.js"></script>
 
   <style>
-    :root {
-      /* Exact image/page dimensions (single page) */
-      --page-w: 525.6px;
-      --page-h: 792px;
-      /* Book = two pages side by side */
-      --book-w: calc(var(--page-w) * 2);
-      --book-h: var(--page-h);
+    :root{
+      /* Native, exact, single-page dimensions */
+      --native-page-w: 525.6px;
+      --native-page-h: 792px;
+      --native-book-w: calc(var(--native-page-w) * 2);
+      --native-book-h: var(--native-page-h);
     }
 
+    /* No transforms on ancestors (prevents Turn.js misalignment on some hosts) */
     html, body {
       margin: 0;
       padding: 0;
-      overflow: hidden !important;
-      width: 100%;
       height: 100%;
+      width: 100%;
+      overflow: hidden !important;
       background: transparent;
+      display: flex;                 /* center without transforms */
+      align-items: center;
+      justify-content: center;
     }
 
-    /* Outer container centers the scaled book and holds arrows */
+    /* Container just wraps the book and arrow hit areas */
     #flipbook-container {
       position: relative;
-      margin: 0 auto;
-      width: var(--book-w);
-      height: var(--book-h);
-      overflow: visible; /* allow arrows to sit just outside the book */
-      top: 50%;
-      transform: translateY(-50%);
+      /* width/height will be set by JS to the current book size */
     }
 
-    /* This inner wrapper is scaled responsively via JS */
-    #scale-wrap {
-      position: relative;
-      width: var(--book-w);
-      height: var(--book-h);
-      transform-origin: top center;
-      margin: 0 auto;
-    }
-
+    /* Book gets sized by Turn.js .turn('size', w,h) */
     #flipbook {
-      width: var(--book-w);
-      height: var(--book-h);
       background: transparent !important;
     }
 
+    /* Let Turn.js set page sizes; we don't hardcode width/height here */
     #flipbook .page {
-      width: var(--page-w);
-      height: var(--page-h);
       background: transparent !important;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
       overflow: hidden;
       position: relative;
       transition: box-shadow 0.3s ease;
     }
 
-    /* Images should fill their page exactly; no cropping */
-    #flipbook .page img {
+    #flipbook .page img{
       width: 100%;
       height: 100%;
       display: block;
-      object-fit: fill; /* exact aspect ratio; no top/bottom crop */
+      object-fit: fill;            /* exact page fit; no cropping */
       image-rendering: auto;
       backface-visibility: hidden;
       transform-style: preserve-3d;
     }
 
-    /* Subtle inner edge shading for depth */
-    #flipbook .page::before {
-      content: "";
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 10px;
-      height: 100%;
-      background: linear-gradient(to right, rgba(0,0,0,0.05), transparent);
-      pointer-events: none;
-      z-index: 1;
+    /* Inner-edge shading */
+    #flipbook .page::before{
+      content:"";
+      position:absolute;
+      top:0; left:0;
+      width:10px; height:100%;
+      background:linear-gradient(to right, rgba(0,0,0,0.05), transparent);
+      pointer-events:none; z-index:1;
+    }
+    #flipbook .page:nth-child(even)::before{
+      left:auto; right:0;
+      background:linear-gradient(to left, rgba(0,0,0,0.05), transparent);
     }
 
-    #flipbook .page:nth-child(even)::before {
-      left: auto;
-      right: 0;
-      background: linear-gradient(to left, rgba(0,0,0,0.05), transparent);
+    /* Arrows (not scaled; positioned next to the book) */
+    .nav-arrow{
+      position:absolute;
+      top:50%;
+      transform:translateY(-50%);
+      width:50px; height:50px;
+      background:rgba(0,0,0,0.4);
+      border-radius:50%;
+      display:flex; align-items:center; justify-content:center;
+      cursor:pointer;
+      z-index:1000;
+      transition: background .3s ease, opacity .25s ease;
+      user-select:none; -webkit-user-select:none;
+      opacity:1;
     }
+    .nav-arrow.is-hidden{ opacity:0; pointer-events:none; }
+    .nav-arrow:hover{ background:rgba(0,0,0,0.6); }
 
-    /* Navigation arrows */
-    .nav-arrow {
-      position: absolute;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 50px;
-      height: 50px;
-      background: rgba(0, 0, 0, 0.4);
-      border-radius: 50%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      cursor: pointer;
-      z-index: 1000;
-      transition: background 0.3s ease, opacity 0.25s ease;
-      user-select: none;
-      -webkit-user-select: none;
-      opacity: 1;
-    }
+    .arrow-left{  left:-60px; }
+    .arrow-right{ right:-60px; }
 
-    /* Fade hidden state */
-    .nav-arrow.is-hidden {
-      opacity: 0;
-      pointer-events: none;
-    }
+    .nav-arrow svg{ width:24px; height:24px; fill:#fff; }
 
-    .nav-arrow:hover {
-      background: rgba(0, 0, 0, 0.6);
-    }
-
-    .arrow-left { left: -60px; }
-    .arrow-right { right: -60px; }
-
-    .nav-arrow svg {
-      width: 24px;
-      height: 24px;
-      fill: white;
-    }
-
-    /* On narrow screens, keep arrows inside */
-    @media (max-width: 900px) {
-      .arrow-left { left: 10px; }
-      .arrow-right { right: 10px; }
+    /* Keep arrows reachable on narrow embeds */
+    @media (max-width: 900px){
+      .arrow-left{ left:10px; }
+      .arrow-right{ right:10px; }
     }
   </style>
 </head>
@@ -150,20 +115,17 @@
       </svg>
     </div>
 
-    <!-- Scaled wrapper so the flipbook keeps exact aspect ratio -->
-    <div id="scale-wrap">
-      <div id="flipbook">
-        <div class="page"><img src="pages/page_1.jpg" alt="Page 1"></div>
-        <div class="page"><img src="pages/page_2.jpg" alt="Page 2"></div>
-        <div class="page"><img src="pages/page_3.jpg" alt="Page 3"></div>
-        <div class="page"><img src="pages/page_4.jpg" alt="Page 4"></div>
-        <div class="page"><img src="pages/page_5.jpg" alt="Page 5"></div>
-        <div class="page"><img src="pages/page_6.jpg" alt="Page 6"></div>
-        <div class="page"><img src="pages/page_7.jpg" alt="Page 7"></div>
-        <div class="page"><img src="pages/page_8.jpg" alt="Page 8"></div>
-        <div class="page"><img src="pages/page_9.jpg" alt="Page 9"></div>
-        <div class="page"><img src="pages/page_10.jpg" alt="Page 10"></div>
-      </div>
+    <div id="flipbook">
+      <div class="page"><img src="pages/page_1.jpg"  alt="Page 1"></div>
+      <div class="page"><img src="pages/page_2.jpg"  alt="Page 2"></div>
+      <div class="page"><img src="pages/page_3.jpg"  alt="Page 3"></div>
+      <div class="page"><img src="pages/page_4.jpg"  alt="Page 4"></div>
+      <div class="page"><img src="pages/page_5.jpg"  alt="Page 5"></div>
+      <div class="page"><img src="pages/page_6.jpg"  alt="Page 6"></div>
+      <div class="page"><img src="pages/page_7.jpg"  alt="Page 7"></div>
+      <div class="page"><img src="pages/page_8.jpg"  alt="Page 8"></div>
+      <div class="page"><img src="pages/page_9.jpg"  alt="Page 9"></div>
+      <div class="page"><img src="pages/page_10.jpg" alt="Page 10"></div>
     </div>
 
     <div class="nav-arrow arrow-right" id="nextBtn" aria-label="Next page">
@@ -174,89 +136,101 @@
   </div>
 
   <script>
-    (function() {
-      const PAGE_W = 525.6;
-      const PAGE_H = 792;
-      const BOOK_W = PAGE_W * 2;
-      const BOOK_H = PAGE_H;
+    (function(){
+      const NATIVE_PAGE_W = 525.6;
+      const NATIVE_PAGE_H = 792;
+      const NATIVE_BOOK_W = NATIVE_PAGE_W * 2;
+      const NATIVE_BOOK_H = NATIVE_PAGE_H;
 
       let isTurning = false;
 
-      function sizeBook() {
+      function desiredBookSize(){
+        // Fit the book to the viewport WITHOUT transforms.
         const vw = window.innerWidth;
         const vh = window.innerHeight;
+
+        // Room for arrows + breathing room
         const sideGutter = 160;
         const topBottomGutter = 40;
-        const scaleW = (vw - sideGutter) / BOOK_W;
-        const scaleH = (vh - topBottomGutter) / BOOK_H;
-        let scale = Math.min(scaleW, scaleH);
-        if (!isFinite(scale) || scale <= 0) scale = 1;
-        scale = Math.min(scale, 1);
 
-        const container = document.getElementById('flipbook-container');
-        const wrap = document.getElementById('scale-wrap');
-        wrap.style.transform = 'scale(' + scale + ')';
-        container.style.width = (BOOK_W * scale) + 'px';
-        container.style.height = (BOOK_H * scale) + 'px';
+        const maxW = Math.max(320, vw - sideGutter);
+        const maxH = Math.max(240, vh - topBottomGutter);
+
+        const scaleW = maxW / NATIVE_BOOK_W;
+        const scaleH = maxH / NATIVE_BOOK_H;
+        const scale = Math.min(scaleW, scaleH, 1); // never upscale past native
+
+        return {
+          w: Math.round(NATIVE_BOOK_W * scale),
+          h: Math.round(NATIVE_BOOK_H * scale)
+        };
       }
 
-      function updateArrows() {
+      function applySize(){
+        const size = desiredBookSize();
         const $book = $('#flipbook');
-        const current = $book.turn('page') || 1;
-        const total = $book.turn('pages') || 1;
-        const atFrontCover = current === 1;
-        const atBackCover = current === total;
 
-        const $prev = $('#prevBtn');
-        const $next = $('#nextBtn');
+        // Tell Turn.js the new exact size (this also resizes pages internally)
+        $book.turn('size', size.w, size.h);
 
-        if (atFrontCover) $prev.addClass('is-hidden'); else $prev.removeClass('is-hidden');
-        if (atBackCover) $next.addClass('is-hidden'); else $next.removeClass('is-hidden');
+        // Resize container so arrows hug the book
+        const container = document.getElementById('flipbook-container');
+        container.style.width  = size.w + 'px';
+        container.style.height = size.h + 'px';
       }
 
-      function initTurn() {
+      function updateArrows(){
+        const $book = $('#flipbook');
+        const current = $book.turn('page')  || 1;
+        const total   = $book.turn('pages') || 1;
+
+        const atFront = current === 1;
+        const atBack  = current === total;
+
+        $('#prevBtn').toggleClass('is-hidden', atFront);
+        $('#nextBtn').toggleClass('is-hidden', atBack);
+      }
+
+      function initTurn(){
         $('#flipbook').turn({
-          width: BOOK_W,
-          height: BOOK_H,
+          width:  NATIVE_BOOK_W,
+          height: NATIVE_BOOK_H,
           autoCenter: true,
           duration: 1200,
           gradients: true,
           elevation: 50,
+          /* Some builds of turn.js honor this flag to prefer 2D transforms;
+             it can help inside transform-heavy hosts */
+          acceleration: false,
           when: {
-            turning: function() {
-              isTurning = true;
-            },
-            turned: function() {
-              isTurning = false;
-              updateArrows();
-            }
+            turning: function(){ isTurning = true; },
+            turned:  function(){ isTurning = false; updateArrows(); }
           }
         });
       }
 
-      function bindNav() {
-        $('#prevBtn').on('click', function() {
+      function bindNav(){
+        $('#prevBtn').on('click', function(){
           if (!isTurning) $('#flipbook').turn('previous');
         });
-        $('#nextBtn').on('click', function() {
+        $('#nextBtn').on('click', function(){
           if (!isTurning) $('#flipbook').turn('next');
         });
 
         document.addEventListener('keydown', (e) => {
-          if (e.key === 'ArrowLeft') $('#flipbook').turn('previous');
+          if (e.key === 'ArrowLeft')  $('#flipbook').turn('previous');
           if (e.key === 'ArrowRight') $('#flipbook').turn('next');
         });
       }
 
-      $(function() {
+      $(function(){
         initTurn();
         bindNav();
-        sizeBook();
-        updateArrows();
-        window.addEventListener('resize', sizeBook);
+        applySize();                 // initial fit
+        updateArrows();              // initial arrow visibility
+        window.addEventListener('resize', applySize);
       });
     })();
   </script>
-
 </body>
 </html>
