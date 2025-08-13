@@ -70,7 +70,7 @@
       width: 100%;
       height: 100%;
       display: block;
-      object-fit: fill; /* aspect matches the page; prevents top/bottom crop */
+      object-fit: fill; /* exact aspect ratio; no top/bottom crop */
       image-rendering: auto;
       backface-visibility: hidden;
       transform-style: preserve-3d;
@@ -95,7 +95,7 @@
       background: linear-gradient(to left, rgba(0,0,0,0.05), transparent);
     }
 
-    /* Navigation arrows live alongside the container so they don't scale */
+    /* Navigation arrows */
     .nav-arrow {
       position: absolute;
       top: 50%;
@@ -109,9 +109,16 @@
       align-items: center;
       cursor: pointer;
       z-index: 1000;
-      transition: background 0.3s ease;
+      transition: background 0.3s ease, opacity 0.25s ease;
       user-select: none;
       -webkit-user-select: none;
+      opacity: 1;
+    }
+
+    /* Fade hidden state */
+    .nav-arrow.is-hidden {
+      opacity: 0;
+      pointer-events: none;
     }
 
     .nav-arrow:hover {
@@ -127,7 +134,7 @@
       fill: white;
     }
 
-    /* On narrow screens, keep arrows inside so they're always reachable */
+    /* On narrow screens, keep arrows inside */
     @media (max-width: 900px) {
       .arrow-left { left: 10px; }
       .arrow-right { right: 10px; }
@@ -143,7 +150,7 @@
       </svg>
     </div>
 
-    <!-- Scaled wrapper so the flipbook keeps exact aspect ratio but fits the viewport -->
+    <!-- Scaled wrapper so the flipbook keeps exact aspect ratio -->
     <div id="scale-wrap">
       <div id="flipbook">
         <div class="page"><img src="pages/page_1.jpg" alt="Page 1"></div>
@@ -178,26 +185,33 @@
       function sizeBook() {
         const vw = window.innerWidth;
         const vh = window.innerHeight;
-
-        // Keep a little breathing room so it never touches the browser edges
-        const sideGutter = 160;  // accounts for arrows + margin
+        const sideGutter = 160;
         const topBottomGutter = 40;
-
-        // Scale based on whichever constraint (width/height) is tighter
         const scaleW = (vw - sideGutter) / BOOK_W;
         const scaleH = (vh - topBottomGutter) / BOOK_H;
         let scale = Math.min(scaleW, scaleH);
-
-        // Avoid absurd scaling
         if (!isFinite(scale) || scale <= 0) scale = 1;
-        scale = Math.min(scale, 1); // don't upscale beyond 100% (optional)
+        scale = Math.min(scale, 1);
 
-        // Apply scale and update container so arrows align to real edges
         const container = document.getElementById('flipbook-container');
         const wrap = document.getElementById('scale-wrap');
         wrap.style.transform = 'scale(' + scale + ')';
         container.style.width = (BOOK_W * scale) + 'px';
         container.style.height = (BOOK_H * scale) + 'px';
+      }
+
+      function updateArrows() {
+        const $book = $('#flipbook');
+        const current = $book.turn('page') || 1;
+        const total = $book.turn('pages') || 1;
+        const atFrontCover = current === 1;
+        const atBackCover = current === total;
+
+        const $prev = $('#prevBtn');
+        const $next = $('#nextBtn');
+
+        if (atFrontCover) $prev.addClass('is-hidden'); else $prev.removeClass('is-hidden');
+        if (atBackCover) $next.addClass('is-hidden'); else $next.removeClass('is-hidden');
       }
 
       function initTurn() {
@@ -214,6 +228,7 @@
             },
             turned: function() {
               isTurning = false;
+              updateArrows();
             }
           }
         });
@@ -227,7 +242,6 @@
           if (!isTurning) $('#flipbook').turn('next');
         });
 
-        // Keyboard support
         document.addEventListener('keydown', (e) => {
           if (e.key === 'ArrowLeft') $('#flipbook').turn('previous');
           if (e.key === 'ArrowRight') $('#flipbook').turn('next');
@@ -238,6 +252,7 @@
         initTurn();
         bindNav();
         sizeBook();
+        updateArrows();
         window.addEventListener('resize', sizeBook);
       });
     })();
