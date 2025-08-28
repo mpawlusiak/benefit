@@ -6,38 +6,15 @@
   <title>Flipbook (PDF.js + Turn.js)</title>
 
   <!-- jQuery -->
-  <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-  <!-- Turn.js -->
-  <script src="https://raw.githubusercontent.com/blasten/turn.js/4/turn.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-
-<script>
-(function(){
-  function loadScript(src, onload){
-    var s=document.createElement('script'); s.src=src; s.onload=onload; s.onerror=function(){
-      console.error('Failed to load', src);
-    }; document.head.appendChild(s);
-  }
-  if (typeof jQuery === 'undefined') return; // nothing to do
-  // If Turn.js didn't load, try a local fallback path ./lib/turn.js (in case you self-host it)
-  window.addEventListener('load', function(){
-    if (typeof jQuery.fn.turn === 'undefined') {
-      console.warn('Turn.js not found. Attempting local fallback ./lib/turn.js');
-      loadScript('./lib/turn.js', function(){
-        if (typeof jQuery.fn.turn === 'undefined') {
-          console.error('Turn.js still unavailable. Please self-host ./lib/turn.js or update the CDN URL.');
-        } else {
-          console.log('Turn.js loaded from local fallback.');
-        }
-      });
-    }
-  });
-})();
-</script>
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+  <!-- Turn.js (self-hosted) -->
+  <script src="./lib/turn.min.js"></script>
 
   <!-- PDF.js (core + worker) -->
-  <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
   <script>
-    pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js";
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+      "https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js";
   </script>
 
   <style>
@@ -83,7 +60,7 @@
     }
     .textLayer {
       position: absolute;
-      left: 0;top: 0;right: 0;bottom: 0;
+      left: 0; top: 0; right: 0; bottom: 0;
       overflow: hidden;
       pointer-events: none;
       mix-blend-mode: multiply;
@@ -217,7 +194,7 @@
       textContent.items.forEach((item) => {
         const tx = document.createElement("span");
         tx.textContent = item.str;
-        const t = item.transform; // [a,b,c,d,e,f]
+        const t = item.transform;
         const fontHeightPx = Math.hypot(t[2], t[3]);
         const x = t[4], y = t[5];
         const [a,b,c,d,e,f] = renderViewport.transform;
