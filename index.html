@@ -1,192 +1,236 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Flipbook (PDF.js, no Turn.js)</title>
-<style>
-  :root{ --page-shadow: 0 12px 28px rgba(0,0,0,.28), 0 2px 8px rgba(0,0,0,.18); --flip-ms: 900ms; }
-  html,body{height:100%;margin:0;background:transparent;}
-  .wrap{position:fixed;inset:0;display:grid;place-items:center;background:transparent;}
-  #book{position:relative; background:transparent; perspective:2000px; user-select:none;}
-  .spread{position:relative; display:grid; grid-template-columns:1fr 1fr; gap:0; align-items:stretch;}
-  .page{position:relative; background:#fff; box-shadow:var(--page-shadow); overflow:hidden;}
-  .page canvas{position:absolute; inset:0; width:100%; height:100%;}
-  .textLayer{position:absolute; inset:0; pointer-events:none; mix-blend-mode:multiply;}
-  .textLayer>span{position:absolute; white-space:pre; transform-origin:0 0; line-height:1; color:transparent; text-shadow:0 0 0 #000;}
-  .edge-shadow{position:absolute; top:0; bottom:0; width:60px; pointer-events:none; opacity:0; transition:opacity .25s ease;}
-  .edge-shadow.left{left:0; background:linear-gradient(90deg, rgba(0,0,0,.18), rgba(0,0,0,0));}
-  .edge-shadow.right{right:0; background:linear-gradient(270deg, rgba(0,0,0,.18), rgba(0,0,0,0));}
-  .nav{position:absolute; top:50%; transform:translateY(-50%); z-index:10;}
-  .btn{width:56px;height:56px;border-radius:999px;border:1px solid rgba(0,0,0,.15);background:rgba(255,255,255,.85);box-shadow:0 8px 20px rgba(0,0,0,.2);display:grid;place-items:center;cursor:pointer;transition:transform .2s ease, opacity .2s ease;}
-  .btn:hover{transform:translateY(-50%) scale(1.04);}
-  .btn[hidden]{opacity:0;pointer-events:none;}
-  .nav.left{left:2.5%} .nav.right{right:2.5%}
-  .hint{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,.9);font:500 13px/1.4 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;padding:8px 12px;border-radius:999px;box-shadow:0 6px 16px rgba(0,0,0,.18);opacity:0;animation:fade 3s ease 1s 1 forwards;pointer-events:none;}
-  @keyframes fade{0%{opacity:0}15%{opacity:1}85%{opacity:1}100%{opacity:0}}
-  /* Flip animation (right page flips left) */
-  .flip-right {transform-origin:left center; transform:rotateY(0); animation:flipRight var(--flip-ms) ease forwards;}
-  @keyframes flipRight {
-    0%   { transform: rotateY(0deg);   filter:brightness(1); }
-    50%  { filter:brightness(.92); }
-    100% { transform: rotateY(-180deg); filter:brightness(.88); }
-  }
-  /* Flip animation (left page flips right, on going backwards) */
-  .flip-left {transform-origin:right center; transform:rotateY(0); animation:flipLeft var(--flip-ms) ease forwards;}
-  @keyframes flipLeft {
-    0%   { transform: rotateY(0deg);   filter:brightness(1); }
-    50%  { filter:brightness(.92); }
-    100% { transform: rotateY(180deg); filter:brightness(.88); }
-  }
-</style>
+  <meta charset="UTF-8" />
+  <title>beNeFit XIII Booklet</title>
+
+  <!-- jQuery -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+  <!-- Turn.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/turn.js/3/turn.min.js"></script>
+
+  <style>
+    :root{
+      /* Native, exact, single-page dimensions */
+      --native-page-w: 525.6px;
+      --native-page-h: 792px;
+      --native-book-w: calc(var(--native-page-w) * 2);
+      --native-book-h: var(--native-page-h);
+    }
+
+    /* No transforms on ancestors (prevents Turn.js misalignment on some hosts) */
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      width: 100%;
+      overflow: hidden !important;
+      background: transparent;
+      display: flex;                 /* center without transforms */
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Container just wraps the book and arrow hit areas */
+    #flipbook-container {
+      position: relative;
+      /* width/height will be set by JS to the current book size */
+    }
+
+    /* Book gets sized by Turn.js .turn('size', w,h) */
+    #flipbook {
+      background: transparent !important;
+    }
+
+    /* Let Turn.js set page sizes; we don't hardcode width/height here */
+    #flipbook .page {
+      background: transparent !important;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      overflow: hidden;
+      position: relative;
+      transition: box-shadow 0.3s ease;
+    }
+
+    #flipbook .page img{
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: fill;            /* exact page fit; no cropping */
+      image-rendering: auto;
+      backface-visibility: hidden;
+      transform-style: preserve-3d;
+    }
+
+    /* Inner-edge shading */
+    #flipbook .page::before{
+      content:"";
+      position:absolute;
+      top:0; left:0;
+      width:10px; height:100%;
+      background:linear-gradient(to right, rgba(0,0,0,0.05), transparent);
+      pointer-events:none; z-index:1;
+    }
+    #flipbook .page:nth-child(even)::before{
+      left:auto; right:0;
+      background:linear-gradient(to left, rgba(0,0,0,0.05), transparent);
+    }
+
+    /* Arrows (not scaled; positioned next to the book) */
+    .nav-arrow{
+      position:absolute;
+      top:50%;
+      transform:translateY(-50%);
+      width:50px; height:50px;
+      background:rgba(0,0,0,0.4);
+      border-radius:50%;
+      display:flex; align-items:center; justify-content:center;
+      cursor:pointer;
+      z-index:1000;
+      transition: background .3s ease, opacity .25s ease;
+      user-select:none; -webkit-user-select:none;
+      opacity:1;
+    }
+    .nav-arrow.is-hidden{ opacity:0; pointer-events:none; }
+    .nav-arrow:hover{ background:rgba(0,0,0,0.6); }
+
+    .arrow-left{  left:-60px; }
+    .arrow-right{ right:-60px; }
+
+    .nav-arrow svg{ width:24px; height:24px; fill:#fff; }
+
+    /* Keep arrows reachable on narrow embeds */
+    @media (max-width: 900px){
+      .arrow-left{ left:10px; }
+      .arrow-right{ right:10px; }
+    }
+  </style>
 </head>
 <body>
-<div class="wrap">
-  <div id="book" aria-label="Interactive booklet">
-    <div class="spread" id="spread">
-      <div class="page" id="left"><canvas></canvas><div class="textLayer"></div><div class="edge-shadow left"></div></div>
-      <div class="page" id="right"><canvas></canvas><div class="textLayer"></div><div class="edge-shadow right"></div></div>
+
+  <div id="flipbook-container">
+    <div class="nav-arrow arrow-left" id="prevBtn" aria-label="Previous page">
+      <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
+        <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
+      </svg>
     </div>
-    <div class="nav left"><button class="btn" id="prev" aria-label="Previous" hidden>
-      <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-    </button></div>
-    <div class="nav right"><button class="btn" id="next" aria-label="Next" hidden>
-      <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-    </button></div>
-    <div class="hint">Tap or use arrows to flip</div>
+
+    <div id="flipbook">
+      <div class="page"><img src="pages/page_1.jpg"  alt="Page 1"></div>
+      <div class="page"><img src="pages/page_2.jpg"  alt="Page 2"></div>
+      <div class="page"><img src="pages/page_3.jpg"  alt="Page 3"></div>
+      <div class="page"><img src="pages/page_4.jpg"  alt="Page 4"></div>
+      <div class="page"><img src="pages/page_5.jpg"  alt="Page 5"></div>
+      <div class="page"><img src="pages/page_6.jpg"  alt="Page 6"></div>
+      <div class="page"><img src="pages/page_7.jpg"  alt="Page 7"></div>
+      <div class="page"><img src="pages/page_8.jpg"  alt="Page 8"></div>
+      <div class="page"><img src="pages/page_9.jpg"  alt="Page 9"></div>
+      <div class="page"><img src="pages/page_10.jpg" alt="Page 10"></div>
+    </div>
+
+    <div class="nav-arrow arrow-right" id="nextBtn" aria-label="Next page">
+      <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
+        <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/>
+      </svg>
+    </div>
   </div>
-</div>
 
-<!-- PDF.js -->
-<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
-<script>
-  pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js";
-</script>
+  <script>
+    (function(){
+      const NATIVE_PAGE_W = 525.6;
+      const NATIVE_PAGE_H = 792;
+      const NATIVE_BOOK_W = NATIVE_PAGE_W * 2;
+      const NATIVE_BOOK_H = NATIVE_PAGE_H;
 
-<script>
-const PDF_URL = "./beNeFit%20XIII%20-%20Benefactors%20Booklet.pdf";  // same-folder PDF
-const BASE_SCALE = 1.25;
+      let isTurning = false;
 
-const book = document.getElementById('book');
-const spread = document.getElementById('spread');
-const left = document.getElementById('left');
-const right = document.getElementById('right');
-const prevBtn = document.getElementById('prev');
-const nextBtn = document.getElementById('next');
+      function desiredBookSize(){
+        // Fit the book to the viewport WITHOUT transforms.
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
 
-let pdf, numPages=0, current=1, pageW=800, pageH=1100;
+        // Room for arrows + breathing room
+        const sideGutter = 160;
+        const topBottomGutter = 40;
 
-function computeSizes(){
-  const cw = Math.min(window.innerWidth*0.92, 1600);
-  const ch = window.innerHeight*0.92;
-  const bookAspect = (pageW*2)/pageH;
-  let bookW = cw, bookH = bookW/bookAspect;
-  if (bookH>ch){ bookH=ch; bookW=bookH*bookAspect; }
-  spread.style.width = Math.floor(bookW)+'px';
-  spread.style.height = Math.floor(bookH)+'px';
-  for (const p of [left,right]){
-    p.style.width = Math.floor(bookW/2)+'px';
-    p.style.height = Math.floor(bookH)+'px';
-  }
-}
+        const maxW = Math.max(320, vw - sideGutter);
+        const maxH = Math.max(240, vh - topBottomGutter);
 
-async function renderPage(n, sideEl){
-  const page = await pdf.getPage(n);
-  const vp1 = page.getViewport({scale:1});
-  // store page aspect from first page
-  pageW = vp1.width; pageH = vp1.height;
-  computeSizes();
-  const targetW = sideEl.clientWidth;
-  const scale = (targetW / vp1.width) * (window.devicePixelRatio||1) * BASE_SCALE;
-  const vp = page.getViewport({scale});
+        const scaleW = maxW / NATIVE_BOOK_W;
+        const scaleH = maxH / NATIVE_BOOK_H;
+        const scale = Math.min(scaleW, scaleH, 1); // never upscale past native
 
-  const canvas = sideEl.querySelector('canvas');
-  const ctx = canvas.getContext('2d', {alpha:false});
-  canvas.width = Math.max(1, Math.floor(vp.width));
-  canvas.height = Math.max(1, Math.floor(vp.height));
-  canvas.style.width = sideEl.clientWidth+'px';
-  canvas.style.height = sideEl.clientHeight+'px';
+        return {
+          w: Math.round(NATIVE_BOOK_W * scale),
+          h: Math.round(NATIVE_BOOK_H * scale)
+        };
+      }
 
-  sideEl.querySelector('.textLayer').innerHTML = '';
-  await page.render({canvasContext:ctx, viewport:vp}).promise;
+      function applySize(){
+        const size = desiredBookSize();
+        const $book = $('#flipbook');
 
-  const text = await page.getTextContent();
-  text.items.forEach((it)=>{
-    const s=document.createElement('span');
-    s.textContent=it.str;
-    const t=it.transform; const fh=Math.hypot(t[2],t[3]); const x=t[4], y=t[5];
-    const [a,b,c,d,e,f] = vp.transform;
-    const cssX=a*x + c*y + e;
-    const cssY=b*x + d*y + f;
-    s.style.left=cssX+'px';
-    s.style.top=(cssY - fh)+'px';
-    s.style.fontSize=fh+'px';
-    s.style.transform=`matrix(${t[0]},${t[1]},${t[2]},${t[3]},0,0)`;
-    sideEl.querySelector('.textLayer').appendChild(s);
-  });
-}
+        // Tell Turn.js the new exact size (this also resizes pages internally)
+        $book.turn('size', size.w, size.h);
 
-function syncArrows(){
-  prevBtn.hidden = current<=1;
-  nextBtn.hidden = current>=numPages;
-}
+        // Resize container so arrows hug the book
+        const container = document.getElementById('flipbook-container');
+        container.style.width  = size.w + 'px';
+        container.style.height = size.h + 'px';
+      }
 
-async function goNext(){
-  if (current>=numPages) return;
-  // animate right page flipping left
-  right.classList.add('flip-right');
-  right.querySelector('.edge-shadow.right').style.opacity = 1;
-  await new Promise(r=>setTimeout(r, 0.66*parseInt(getComputedStyle(document.documentElement).getPropertyValue('--flip-ms'))));
-  current++;
-  await renderSpread();
-  right.classList.remove('flip-right');
-  right.querySelector('.edge-shadow.right').style.opacity = 0;
-}
+      function updateArrows(){
+        const $book = $('#flipbook');
+        const current = $book.turn('page')  || 1;
+        const total   = $book.turn('pages') || 1;
 
-async function goPrev(){
-  if (current<=1) return;
-  // animate left page flipping right
-  left.classList.add('flip-left');
-  left.querySelector('.edge-shadow.left').style.opacity = 1;
-  await new Promise(r=>setTimeout(r, 0.66*parseInt(getComputedStyle(document.documentElement).getPropertyValue('--flip-ms'))));
-  current--;
-  await renderSpread();
-  left.classList.remove('flip-left');
-  left.querySelector('.edge-shadow.left').style.opacity = 0;
-}
+        const atFront = current === 1;
+        const atBack  = current === total;
 
-async function renderSpread(){
-  const l = Math.max(1, current-1);
-  const r = Math.min(numPages, current);
-  await renderPage(l, left);
-  await renderPage(r, right);
-  syncArrows();
-}
+        $('#prevBtn').toggleClass('is-hidden', atFront);
+        $('#nextBtn').toggleClass('is-hidden', atBack);
+      }
 
-window.addEventListener('resize', ()=>{ computeSizes(); });
+      function initTurn(){
+        $('#flipbook').turn({
+          width:  NATIVE_BOOK_W,
+          height: NATIVE_BOOK_H,
+          autoCenter: true,
+          duration: 1200,
+          gradients: true,
+          elevation: 50,
+          /* Some builds of turn.js honor this flag to prefer 2D transforms;
+             it can help inside transform-heavy hosts */
+          acceleration: false,
+          when: {
+            turning: function(){ isTurning = true; },
+            turned:  function(){ isTurning = false; updateArrows(); }
+          }
+        });
+      }
 
-document.addEventListener('keydown', (e)=>{
-  if (e.key==='ArrowRight') goNext();
-  if (e.key==='ArrowLeft')  goPrev();
-});
-right.addEventListener('click', goNext);
-left.addEventListener('click', goPrev);
-prevBtn.addEventListener('click', goPrev);
-nextBtn.addEventListener('click', goNext);
+      function bindNav(){
+        $('#prevBtn').on('click', function(){
+          if (!isTurning) $('#flipbook').turn('previous');
+        });
+        $('#nextBtn').on('click', function(){
+          if (!isTurning) $('#flipbook').turn('next');
+        });
 
-(async function init(){
-  try{
-    pdf = await pdfjsLib.getDocument({ url: PDF_URL, withCredentials:false }).promise;
-    numPages = pdf.numPages;
-    await renderSpread();
-  }catch(err){
-    console.error(err);
-    const msg=document.createElement('div');
-    msg.style.cssText="color:#900;font:14px/1.5 system-ui;padding:16px;background:rgba(255,255,255,.8);border:1px solid #f6dcdc;border-radius:12px;";
-    msg.textContent="Flipbook failed to initialize. Open the console for details.";
-    book.appendChild(msg);
-  }
-})();
-</script>
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'ArrowLeft')  $('#flipbook').turn('previous');
+          if (e.key === 'ArrowRight') $('#flipbook').turn('next');
+        });
+      }
+
+      $(function(){
+        initTurn();
+        bindNav();
+        applySize();                 // initial fit
+        updateArrows();              // initial arrow visibility
+        window.addEventListener('resize', applySize);
+      });
+    })();
+  </script>
 </body>
 </html>
