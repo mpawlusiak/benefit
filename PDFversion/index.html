@@ -6,28 +6,24 @@
   <title>Flipbook (PDF.js + Turn.js)</title>
 
   <!-- jQuery -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <!-- Turn.js -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/turn.js/4.1.0/turn.min.js" integrity="sha512-CnAps7Cw0ZK1u7Wf2bYHewmYLJ1Io7epgBvU2cB7K9qs6QyY1YeuHkqL2y8yZIeS4wJclnD2bZ7y6lqJvO3Gqg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/turn.js/4.1.0/turn.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
   <!-- PDF.js (core + worker) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.6.82/pdf.min.js" integrity="sha512-i3cblSbgZbyZzLw1sj1+G4J4aOcNGTqMt5eIlg0qB1EqG8Em8m14kRae7u/4p239mjgqbMfF/CsU7N2yznxF9A==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.6.82/pdf.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <script>
-    // Point to the matching worker from the same CDN version
     pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.6.82/pdf.worker.min.js";
   </script>
 
   <style>
     :root{
-      --book-max-width: min(100vw, 1400px);
-      --book-max-height: min(100vh, 900px);
       --page-shadow: 0 12px 28px rgba(0,0,0,0.28), 0 2px 8px rgba(0,0,0,0.18);
-      --accent: #111;
     }
     html, body {
       height: 100%;
       margin: 0;
-      background: transparent; /* Keep fully transparent for Genially embedding */
+      background: transparent;
     }
     .wrap {
       position: fixed;
@@ -36,96 +32,69 @@
       place-items: center;
       background: transparent;
     }
-    /* Container sizing & centering */
     #book-container {
       position: relative;
       width: 100%;
       height: 100%;
       display: grid;
       place-items: center;
-      overflow: visible; /* allow arrows to sit out a bit */
+      overflow: visible;
       background: transparent;
     }
-
-    /* The book element Turn.js will control */
     #flipbook {
-      box-shadow: none; /* no outer box */
+      box-shadow: none;
       background: transparent !important;
       will-change: transform;
     }
-
-    /* Individual pages */
     .page {
-      background: white; /* actual page color */
+      background: white;
       box-shadow: var(--page-shadow);
       overflow: hidden;
       position: relative;
     }
-    /* Canvas fills page */
     .page canvas {
       width: 100%;
       height: 100%;
       display: block;
     }
-    /* PDF.js text layer (selectable text for accessibility) */
     .textLayer {
       position: absolute;
-      left: 0;
-      top: 0;
-      right: 0;
-      bottom: 0;
+      left: 0;top: 0;right: 0;bottom: 0;
       overflow: hidden;
-      pointer-events: none; /* let clicks go to page turn */
-      mix-blend-mode: multiply; /* helps readability on white */
+      pointer-events: none;
+      mix-blend-mode: multiply;
     }
     .textLayer > span {
       position: absolute;
       white-space: pre;
       transform-origin: 0% 0%;
       line-height: 1;
-      color: transparent; /* invisible text selection */
-      text-shadow: 0 0 0 #000; /* keeps selection sharp for screen readers / selection */
+      color: transparent;
+      text-shadow: 0 0 0 #000;
     }
-    .textLayer ::selection {
-      background: rgba(38,143,255,0.25);
-    }
+    .textLayer ::selection { background: rgba(38,143,255,0.25); }
 
-    /* Arrow controls */
     .nav-arrow {
       position: absolute;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 56px;
-      height: 56px;
+      top: 50%; transform: translateY(-50%);
+      width: 56px; height: 56px;
       border-radius: 999px;
       border: 1px solid rgba(0,0,0,0.15);
       background: rgba(255,255,255,0.85);
       box-shadow: 0 8px 20px rgba(0,0,0,0.20);
-      display: grid;
-      place-items: center;
-      cursor: pointer;
-      user-select: none;
+      display: grid; place-items: center;
+      cursor: pointer; user-select: none;
       transition: opacity .25s ease, transform .2s ease;
       will-change: opacity, transform;
       z-index: 5;
     }
-    .nav-arrow svg {
-      width: 28px;
-      height: 28px;
-      display: block;
-    }
+    .nav-arrow svg { width: 28px; height: 28px; display: block; }
     .nav-arrow:hover { transform: translateY(-50%) scale(1.04); }
     .nav-arrow:active { transform: translateY(-50%) scale(0.98); }
-
     .nav-left { left: 2.5%; }
     .nav-right { right: 2.5%; }
+    .nav-arrow[hidden] { opacity: 0; pointer-events: none; }
 
-    .nav-arrow[hidden] {
-      opacity: 0;
-      pointer-events: none;
-    }
-
-    /* Small screens: pull arrows in tighter */
     @media (max-width: 768px) {
       .nav-left { left: 3.5%; }
       .nav-right { right: 3.5%; }
@@ -133,26 +102,18 @@
       .nav-arrow svg { width: 24px; height: 24px; }
     }
 
-    /* Subtle hint overlay for first load (optional) */
     .hint {
       position: absolute;
-      bottom: 16px;
-      left: 50%;
-      transform: translateX(-50%);
+      bottom: 16px; left: 50%; transform: translateX(-50%);
       background: rgba(255,255,255,0.9);
-      font: 500 13px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
-      padding: 8px 12px;
-      border-radius: 999px;
+      font: 500 13px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      padding: 8px 12px; border-radius: 999px;
       box-shadow: 0 6px 16px rgba(0,0,0,0.18);
-      opacity: 0;
-      animation: fadeInOut 3s ease 1s 1 forwards;
+      opacity: 0; animation: fadeInOut 3s ease 1s 1 forwards;
       pointer-events: none;
     }
     @keyframes fadeInOut {
-      0% { opacity: 0 }
-      15% { opacity: 1 }
-      85% { opacity: 1 }
-      100% { opacity: 0 }
+      0% { opacity: 0 } 15% { opacity: 1 } 85% { opacity: 1 } 100% { opacity: 0 }
     }
   </style>
 </head>
@@ -161,7 +122,6 @@
     <div id="book-container" aria-label="Interactive booklet">
       <div id="flipbook" aria-live="polite"></div>
 
-      <!-- Arrow buttons -->
       <button class="nav-arrow nav-left" id="prevBtn" aria-label="Previous page" hidden>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <polyline points="15 18 9 12 15 6"></polyline>
@@ -179,28 +139,14 @@
 
   <script>
     // ========= CONFIG =========
-    // Option A: single multi-page PDF (recommended).
-    const PDF_SINGLE_URL = "https://raw.githubusercontent.com/mpawlusiak/benefit/72feaf18f85b4c3cf4cf1bcbcb8ab47c49620781/PDFversion/beNeFit%20XIII%20-%20Benefactors%20Booklet.pdf";
-
-    // Option B: array of one-page PDFs (leave as [] if you use Option A).
-    // const PDF_PAGE_URLS = [
-    //   "https://raw.githubusercontent.com/your-user/your-repo/branch/path/page-01.pdf",
-    //   "https://raw.githubusercontent.com/your-user/your-repo/branch/path/page-02.pdf",
-    //   // ...
-    // ];
-
-    // Initial render quality. Increase for crisper text; decrease for performance.
-    // This multiplier is applied on top of the devicePixelRatio-aware scaling.
-    const BASE_SCALE = 1.25;
-
-    // ===========================
+    const PDF_SINGLE_URL = "https://raw.githubusercontent.com/mpawlusiak/benefit/ed4665b03399191ea7229fe865a1be2c99d0db6f/PDFversion/beNeFit%20XIII%20-%20Benefactors%20Booklet.pdf";
+    const BASE_SCALE = 1.25; // increase for extra sharpness
 
     const $book = $("#flipbook");
     const $container = $("#book-container");
     const $prev = $("#prevBtn");
     const $next = $("#nextBtn");
 
-    // Helper: create a page DOM structure that Turn.js can use.
     function createPageShell(pageIndex) {
       const page = document.createElement("div");
       page.className = "page";
@@ -218,13 +164,10 @@
       return page;
     }
 
-    // Render a PDF.js page into the provided page DOM (canvas + text layer)
-    async function renderPdfPage(pdf, pageNumber, pageEl, targetPixelWidth = null) {
+    async function renderPdfPage(pdf, pageNumber, pageEl) {
       const page = await pdf.getPage(pageNumber);
       const viewport = page.getViewport({ scale: 1 });
 
-      // Responsive sizing: compute the book size first, then each page size
-      // We'll compute page size based on the measured flipbook single-page size.
       const flipbookSize = computeFlipbookSize(viewport.width, viewport.height);
       const singlePageW = flipbookSize.pageWidth;
       const singlePageH = flipbookSize.pageHeight;
@@ -240,54 +183,39 @@
       canvas.style.width = singlePageW + "px";
       canvas.style.height = singlePageH + "px";
 
-      // Clear prior text layer
       const textLayer = pageEl.querySelector(".textLayer");
       textLayer.innerHTML = "";
 
       const renderTask = page.render({ canvasContext: ctx, viewport: renderViewport });
       await renderTask.promise;
 
-      // Build selectable text layer
       const textContent = await page.getTextContent();
-      // Following PDF.js textLayerBuilder logic (minimal)
       textContent.items.forEach((item) => {
         const tx = document.createElement("span");
         tx.textContent = item.str;
-        const t = item.transform; // [a, b, c, d, e, f]
-        const fontHeightPx = Math.hypot(t[2], t[3]); // scale for y
+        const t = item.transform; // [a,b,c,d,e,f]
+        const fontHeightPx = Math.hypot(t[2], t[3]);
         const x = t[4], y = t[5];
-
-        // Map PDF coordinates to CSS pixels using renderViewport.transform
-        const [a, b, c, d, e, f] = renderViewport.transform;
-        // Transform point (x, y)
+        const [a,b,c,d,e,f] = renderViewport.transform;
         const cssX = a * x + c * y + e;
         const cssY = b * x + d * y + f;
-
         tx.style.left = cssX + "px";
-        // PDF coords start at bottom-left; CSS from top-left, invert using transform matrix
-        // Approximate vertical placement via transform matrix (baseline to top-left adjustment)
         tx.style.top = (cssY - fontHeightPx) + "px";
-
         tx.style.fontSize = fontHeightPx + "px";
         tx.style.transform = `matrix(${t[0]}, ${t[1]}, ${t[2]}, ${t[3]}, 0, 0)`;
         textLayer.appendChild(tx);
       });
 
-      // Size the page element itself
       pageEl.style.width = singlePageW + "px";
       pageEl.style.height = singlePageH + "px";
     }
 
-    // Compute the ideal flipbook size (2 pages across) that fits the container while preserving PDF aspect ratio
     function computeFlipbookSize(pdfPageWidth, pdfPageHeight) {
       const containerW = $container.innerWidth();
       const containerH = $container.innerHeight();
+      const bookAspect = (pdfPageWidth * 2) / pdfPageHeight;
 
-      // Two pages side-by-side + small gutter handled by Turn.js, so compute total width for two pages
-      const pageAspect = pdfPageWidth / pdfPageHeight;
-      const bookAspect = (pdfPageWidth * 2) / pdfPageHeight; // two pages
-
-      let bookW = containerW * 0.92; // keep a small margin
+      let bookW = containerW * 0.92;
       let bookH = bookW / bookAspect;
 
       if (bookH > containerH * 0.92) {
@@ -297,11 +225,9 @@
 
       const pageWidth = bookW / 2;
       const pageHeight = bookH;
-
       return { bookWidth: Math.floor(bookW), bookHeight: Math.floor(bookH), pageWidth: Math.floor(pageWidth), pageHeight: Math.floor(pageHeight) };
     }
 
-    // Turn.js init (called after we know page sizes)
     function initTurn(bookW, bookH) {
       $book.turn({
         width: bookW,
@@ -310,99 +236,71 @@
         acceleration: true,
         gradients: true,
         elevation: 60,
-        duration: 900, // smooth, premium
+        duration: 900
       });
 
-      // Arrow visibility sync
       function syncArrows() {
         const total = $book.turn("pages");
         const current = $book.turn("page");
         $prev.attr("hidden", current <= 1);
         $next.attr("hidden", current >= total);
       }
-
       $book.on("turned", syncArrows);
       syncArrows();
 
-      // Arrow handlers
       $prev.on("click", () => $book.turn("previous"));
       $next.on("click", () => $book.turn("next"));
 
-      // Keyboard nav
       document.addEventListener("keydown", (e) => {
         if (e.key === "ArrowLeft") $book.turn("previous");
         if (e.key === "ArrowRight") $book.turn("next");
       });
 
-      // Tap nav (simple)
       $book.on("click", (e) => {
         const rect = $book[0].getBoundingClientRect();
         const x = e.clientX - rect.left;
         if (x < rect.width / 2) $book.turn("previous"); else $book.turn("next");
       });
 
-      // Resize handling: recompute size & rerender visible pages
       window.addEventListener("resize", debounce(async () => {
-        const firstPage = document.querySelector(".page");
-        if (!firstPage) return;
-        const canvas = firstPage.querySelector("canvas");
-        const currentAspect = canvas.width / canvas.height; // approximate original aspect
-
-        // We kept original PDF aspect in computeFlipbookSize via inputs, so reuse last known ratio via data attributes
         const pdfW = Number($book.data("pdfPageW") || 1000);
         const pdfH = Number($book.data("pdfPageH") || 1414);
-
         const sz = computeFlipbookSize(pdfW, pdfH);
         $book.turn("size", sz.bookWidth, sz.bookHeight);
-
-        // Rerender the currently visible spread for crispness
         await renderVisiblePages();
       }, 200));
     }
 
     function debounce(fn, wait) {
-      let t;
-      return function(...args) {
-        clearTimeout(t);
-        t = setTimeout(() => fn.apply(this, args), wait);
-      };
+      let t; return function(...args) { clearTimeout(t); t = setTimeout(() => fn.apply(this, args), wait); };
     }
 
-    // Render only visible/adjacent pages for performance
     async function renderVisiblePages() {
       const total = $book.turn("pages");
       const current = $book.turn("page");
       const pagesToRender = new Set([current, current-1, current+1, current+2].filter(n => n>=1 && n<=total));
-
-      for (const n of pagesToRender) {
-        await ensurePageRendered(n);
-      }
+      for (const n of pagesToRender) { await ensurePageRendered(n); }
     }
 
-    // Simple cache: mark a page as rendered once to avoid redundant heavy work
     const renderedPages = new Set();
     async function ensurePageRendered(n) {
       if (renderedPages.has(n)) return;
       const pageEl = $book.turn("view", n).filter(Boolean)[0] || document.querySelector(`.page[data-page-index="${n-1}"]`);
       if (!pageEl) return;
-
       const pdfRef = $book.data("pdfRef");
       if (!pdfRef) return;
       await renderPdfPage(pdfRef, n, pageEl);
       renderedPages.add(n);
     }
 
-    // Build the book from a single multi-page PDF
     async function loadFromSinglePdf(url) {
       const pdf = await pdfjsLib.getDocument({ url, withCredentials: false }).promise;
       const num = pdf.numPages;
       const first = await pdf.getPage(1);
       const viewport = first.getViewport({ scale: 1 });
 
-      // Compute sizing for the book
       const { bookWidth, bookHeight, pageWidth, pageHeight } = computeFlipbookSize(viewport.width, viewport.height);
 
-      // Build empty pages first (so Turn.js knows the count)
       const frag = document.createDocumentFragment();
       for (let i=0; i<num; i++) {
         const pageShell = createPageShell(i);
@@ -412,99 +310,26 @@
       }
       $book.append(frag);
 
-      // Save refs
       $book.data("pdfRef", pdf);
       $book.data("pdfPageW", viewport.width);
       $book.data("pdfPageH", viewport.height);
 
-      // Init Turn.js once we know our final size
       initTurn(bookWidth, bookHeight);
 
-      // Render the first visible pages
-      await renderVisiblePages();
-      // Preload next couple pages
-      await ensurePageRendered(3);
-      await ensurePageRendered(4);
-      // Sync arrows after first render
-      $book.trigger("turned");
-    }
-
-    // Build the book from an array of 1-page PDFs
-    async function loadFromPerPagePdfs(urls) {
-      // Load first page to get aspect ratio
-      const firstPdf = await pdfjsLib.getDocument({ url: urls[0] }).promise;
-      const firstPage = await firstPdf.getPage(1);
-      const viewport = firstPage.getViewport({ scale: 1 });
-
-      const { bookWidth, bookHeight, pageWidth, pageHeight } = computeFlipbookSize(viewport.width, viewport.height);
-
-      const frag = document.createDocumentFragment();
-      for (let i=0; i<urls.length; i++) {
-        const pageShell = createPageShell(i);
-        pageShell.style.width = pageWidth + "px";
-        pageShell.style.height = pageHeight + "px";
-        frag.appendChild(pageShell);
-      }
-      $book.append(frag);
-
-      // Store references for later rendering
-      $book.data("pdfPageW", viewport.width);
-      $book.data("pdfPageH", viewport.height);
-
-      // We keep an array of pdf refs for reuse
-      const pdfRefs = [];
-      for (let i=0; i<urls.length; i++) {
-        pdfRefs[i] = null; // lazy-load
-      }
-      $book.data("pdfArray", { urls, pdfRefs });
-
-      initTurn(bookWidth, bookHeight);
-
-      // Render visible pages lazily
       await renderVisiblePages();
       await ensurePageRendered(3);
       await ensurePageRendered(4);
       $book.trigger("turned");
+      $("#nextBtn").removeAttr("hidden");
     }
 
-    // Overload ensurePageRendered to support per-page PDFs if present
-    const _ensurePageRenderedOriginal = ensurePageRendered;
-    ensurePageRendered = async function(n) {
-      if (renderedPages.has(n)) return;
-      const pageEl = $book.turn("view", n).filter(Boolean)[0] || document.querySelector(`.page[data-page-index="${n-1}"]`);
-      if (!pageEl) return;
-
-      const single = $book.data("pdfRef");
-      const arr = $book.data("pdfArray");
-
-      if (single) {
-        await renderPdfPage(single, n, pageEl);
-      } else if (arr) {
-        const idx = n-1;
-        if (!arr.pdfRefs[idx]) {
-          arr.pdfRefs[idx] = await pdfjsLib.getDocument({ url: arr.urls[idx] }).promise;
-        }
-        await renderPdfPage(arr.pdfRefs[idx], 1, pageEl);
-      } else {
-        return;
-      }
-      renderedPages.add(n);
-    }
-
-    // Kick everything off
     (async function init() {
       try {
-        // Choose one: single multi-page PDF, or per-page list
         if (PDF_SINGLE_URL && PDF_SINGLE_URL.trim().length > 0) {
           await loadFromSinglePdf(PDF_SINGLE_URL);
+        } else {
+          throw new Error("Provide a PDF URL.");
         }
-        // else if (PDF_PAGE_URLS && PDF_PAGE_URLS.length) {
-        //   await loadFromPerPagePdfs(PDF_PAGE_URLS);
-        // } else {
-        //   throw new Error("Provide PDF_SINGLE_URL or PDF_PAGE_URLS.");
-        // }
-        // Show arrows once ready
-        $next.removeAttr("hidden");
       } catch (err) {
         console.error(err);
         const msg = document.createElement("div");
