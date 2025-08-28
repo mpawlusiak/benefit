@@ -1,187 +1,192 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Flipbook (PDF.js + Turn.js)</title>
-  <style>
-    :root{ --page-shadow: 0 12px 28px rgba(0,0,0,.28), 0 2px 8px rgba(0,0,0,.18); }
-    html,body{ height:100%; margin:0; background:transparent; }
-    .wrap{ position:fixed; inset:0; display:grid; place-items:center; background:transparent; }
-    #book-container{ position:relative; width:100%; height:100%; display:grid; place-items:center; overflow:visible; background:transparent; }
-    #flipbook{ box-shadow:none; background:transparent!important; will-change:transform; }
-    .page{ background:#fff; box-shadow:var(--page-shadow); overflow:hidden; position:relative; }
-    .page canvas{ width:100%; height:100%; display:block; }
-    .textLayer{ position:absolute; inset:0; overflow:hidden; pointer-events:none; mix-blend-mode:multiply; }
-    .textLayer>span{ position:absolute; white-space:pre; transform-origin:0 0; line-height:1; color:transparent; text-shadow:0 0 0 #000; }
-    .textLayer ::selection{ background:rgba(38,143,255,.25); }
-    .nav-arrow{ position:absolute; top:50%; transform:translateY(-50%); width:56px; height:56px; border-radius:999px; border:1px solid rgba(0,0,0,.15); background:rgba(255,255,255,.85); box-shadow:0 8px 20px rgba(0,0,0,.2); display:grid; place-items:center; cursor:pointer; user-select:none; transition:opacity .25s ease, transform .2s ease; z-index:5; }
-    .nav-arrow:hover{ transform:translateY(-50%) scale(1.04); }
-    .nav-arrow:active{ transform:translateY(-50%) scale(.98); }
-    .nav-arrow[hidden]{ opacity:0; pointer-events:none; }
-    .nav-left{ left:2.5%; } .nav-right{ right:2.5%; }
-    @media (max-width:768px){ .nav-left{left:3.5%} .nav-right{right:3.5%} .nav-arrow{width:48px;height:48px} }
-    .hint{ position:absolute; bottom:16px; left:50%; transform:translateX(-50%); background:rgba(255,255,255,.9); font:500 13px/1.4 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial; padding:8px 12px; border-radius:999px; box-shadow:0 6px 16px rgba(0,0,0,.18); opacity:0; animation:fadeInOut 3s ease 1s 1 forwards; pointer-events:none; }
-    @keyframes fadeInOut{ 0%{opacity:0} 15%{opacity:1} 85%{opacity:1} 100%{opacity:0} }
-  </style>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Flipbook (PDF.js, no Turn.js)</title>
+<style>
+  :root{ --page-shadow: 0 12px 28px rgba(0,0,0,.28), 0 2px 8px rgba(0,0,0,.18); --flip-ms: 900ms; }
+  html,body{height:100%;margin:0;background:transparent;}
+  .wrap{position:fixed;inset:0;display:grid;place-items:center;background:transparent;}
+  #book{position:relative; background:transparent; perspective:2000px; user-select:none;}
+  .spread{position:relative; display:grid; grid-template-columns:1fr 1fr; gap:0; align-items:stretch;}
+  .page{position:relative; background:#fff; box-shadow:var(--page-shadow); overflow:hidden;}
+  .page canvas{position:absolute; inset:0; width:100%; height:100%;}
+  .textLayer{position:absolute; inset:0; pointer-events:none; mix-blend-mode:multiply;}
+  .textLayer>span{position:absolute; white-space:pre; transform-origin:0 0; line-height:1; color:transparent; text-shadow:0 0 0 #000;}
+  .edge-shadow{position:absolute; top:0; bottom:0; width:60px; pointer-events:none; opacity:0; transition:opacity .25s ease;}
+  .edge-shadow.left{left:0; background:linear-gradient(90deg, rgba(0,0,0,.18), rgba(0,0,0,0));}
+  .edge-shadow.right{right:0; background:linear-gradient(270deg, rgba(0,0,0,.18), rgba(0,0,0,0));}
+  .nav{position:absolute; top:50%; transform:translateY(-50%); z-index:10;}
+  .btn{width:56px;height:56px;border-radius:999px;border:1px solid rgba(0,0,0,.15);background:rgba(255,255,255,.85);box-shadow:0 8px 20px rgba(0,0,0,.2);display:grid;place-items:center;cursor:pointer;transition:transform .2s ease, opacity .2s ease;}
+  .btn:hover{transform:translateY(-50%) scale(1.04);}
+  .btn[hidden]{opacity:0;pointer-events:none;}
+  .nav.left{left:2.5%} .nav.right{right:2.5%}
+  .hint{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,.9);font:500 13px/1.4 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;padding:8px 12px;border-radius:999px;box-shadow:0 6px 16px rgba(0,0,0,.18);opacity:0;animation:fade 3s ease 1s 1 forwards;pointer-events:none;}
+  @keyframes fade{0%{opacity:0}15%{opacity:1}85%{opacity:1}100%{opacity:0}}
+  /* Flip animation (right page flips left) */
+  .flip-right {transform-origin:left center; transform:rotateY(0); animation:flipRight var(--flip-ms) ease forwards;}
+  @keyframes flipRight {
+    0%   { transform: rotateY(0deg);   filter:brightness(1); }
+    50%  { filter:brightness(.92); }
+    100% { transform: rotateY(-180deg); filter:brightness(.88); }
+  }
+  /* Flip animation (left page flips right, on going backwards) */
+  .flip-left {transform-origin:right center; transform:rotateY(0); animation:flipLeft var(--flip-ms) ease forwards;}
+  @keyframes flipLeft {
+    0%   { transform: rotateY(0deg);   filter:brightness(1); }
+    50%  { filter:brightness(.92); }
+    100% { transform: rotateY(180deg); filter:brightness(.88); }
+  }
+</style>
 </head>
 <body>
-  <div class="wrap">
-    <div id="book-container" aria-label="Interactive booklet">
-      <div id="flipbook" aria-live="polite"></div>
-
-      <button class="nav-arrow nav-left" id="prevBtn" aria-label="Previous page" hidden>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <polyline points="15 18 9 12 15 6"></polyline>
-        </svg>
-      </button>
-      <button class="nav-arrow nav-right" id="nextBtn" aria-label="Next page" hidden>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <polyline points="9 18 15 12 9 6"></polyline>
-        </svg>
-      </button>
-
-      <div class="hint">Tap or use arrows to flip</div>
+<div class="wrap">
+  <div id="book" aria-label="Interactive booklet">
+    <div class="spread" id="spread">
+      <div class="page" id="left"><canvas></canvas><div class="textLayer"></div><div class="edge-shadow left"></div></div>
+      <div class="page" id="right"><canvas></canvas><div class="textLayer"></div><div class="edge-shadow right"></div></div>
     </div>
+    <div class="nav left"><button class="btn" id="prev" aria-label="Previous" hidden>
+      <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    </button></div>
+    <div class="nav right"><button class="btn" id="next" aria-label="Next" hidden>
+      <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+    </button></div>
+    <div class="hint">Tap or use arrows to flip</div>
   </div>
+</div>
 
-  <!-- Libraries at the END so document.body exists before they execute -->
-  <!-- jQuery -->
-  <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
-  <!-- Turn.js (SELF-HOSTED) -->
-  <script src="./lib/turn.min.js"></script>
-  <!-- PDF.js (core + worker) -->
-  <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
-  <script>
-    pdfjsLib.GlobalWorkerOptions.workerSrc =
-      "https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js";
-  </script>
+<!-- PDF.js -->
+<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+<script>
+  pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js";
+</script>
 
-  <!-- App code -->
-  <script>
-    // ========= CONFIG =========
-    // Use SAME-ORIGIN PDF path to avoid CORS:
-    const PDF_SINGLE_URL = "./beNeFit%20XIII%20-%20Benefactors%20Booklet.pdf";
-    const BASE_SCALE = 1.25;
+<script>
+const PDF_URL = "./beNeFit%20XIII%20-%20Benefactors%20Booklet.pdf";  // same-folder PDF
+const BASE_SCALE = 1.25;
 
-    const $book = $("#flipbook");
-    const $container = $("#book-container");
-    const $prev = $("#prevBtn");
-    const $next = $("#nextBtn");
+const book = document.getElementById('book');
+const spread = document.getElementById('spread');
+const left = document.getElementById('left');
+const right = document.getElementById('right');
+const prevBtn = document.getElementById('prev');
+const nextBtn = document.getElementById('next');
 
-    function createPageShell(i){
-      const page=document.createElement("div");
-      page.className="page"; page.setAttribute("data-page-index", String(i));
-      const canvas=document.createElement("canvas"); canvas.setAttribute("aria-hidden","true");
-      const textLayer=document.createElement("div"); textLayer.className="textLayer"; textLayer.setAttribute("aria-hidden","false");
-      page.appendChild(canvas); page.appendChild(textLayer); return page;
-    }
+let pdf, numPages=0, current=1, pageW=800, pageH=1100;
 
-    async function renderPdfPage(pdf, num, el){
-      const page=await pdf.getPage(num);
-      const vp=page.getViewport({ scale:1 });
+function computeSizes(){
+  const cw = Math.min(window.innerWidth*0.92, 1600);
+  const ch = window.innerHeight*0.92;
+  const bookAspect = (pageW*2)/pageH;
+  let bookW = cw, bookH = bookW/bookAspect;
+  if (bookH>ch){ bookH=ch; bookW=bookH*bookAspect; }
+  spread.style.width = Math.floor(bookW)+'px';
+  spread.style.height = Math.floor(bookH)+'px';
+  for (const p of [left,right]){
+    p.style.width = Math.floor(bookW/2)+'px';
+    p.style.height = Math.floor(bookH)+'px';
+  }
+}
 
-      const sz=computeFlipbookSize(vp.width,vp.height);
-      const w=sz.pageWidth, h=sz.pageHeight;
+async function renderPage(n, sideEl){
+  const page = await pdf.getPage(n);
+  const vp1 = page.getViewport({scale:1});
+  // store page aspect from first page
+  pageW = vp1.width; pageH = vp1.height;
+  computeSizes();
+  const targetW = sideEl.clientWidth;
+  const scale = (targetW / vp1.width) * (window.devicePixelRatio||1) * BASE_SCALE;
+  const vp = page.getViewport({scale});
 
-      const deviceScale=(window.devicePixelRatio||1)*BASE_SCALE;
-      const rvp=page.getViewport({ scale:(w/vp.width)*deviceScale });
+  const canvas = sideEl.querySelector('canvas');
+  const ctx = canvas.getContext('2d', {alpha:false});
+  canvas.width = Math.max(1, Math.floor(vp.width));
+  canvas.height = Math.max(1, Math.floor(vp.height));
+  canvas.style.width = sideEl.clientWidth+'px';
+  canvas.style.height = sideEl.clientHeight+'px';
 
-      const canvas=el.querySelector("canvas");
-      const ctx=canvas.getContext("2d",{alpha:false});
-      canvas.width=Math.max(1,Math.floor(rvp.width));
-      canvas.height=Math.max(1,Math.floor(rvp.height));
-      canvas.style.width=w+"px"; canvas.style.height=h+"px";
+  sideEl.querySelector('.textLayer').innerHTML = '';
+  await page.render({canvasContext:ctx, viewport:vp}).promise;
 
-      const textLayer=el.querySelector(".textLayer"); textLayer.innerHTML="";
+  const text = await page.getTextContent();
+  text.items.forEach((it)=>{
+    const s=document.createElement('span');
+    s.textContent=it.str;
+    const t=it.transform; const fh=Math.hypot(t[2],t[3]); const x=t[4], y=t[5];
+    const [a,b,c,d,e,f] = vp.transform;
+    const cssX=a*x + c*y + e;
+    const cssY=b*x + d*y + f;
+    s.style.left=cssX+'px';
+    s.style.top=(cssY - fh)+'px';
+    s.style.fontSize=fh+'px';
+    s.style.transform=`matrix(${t[0]},${t[1]},${t[2]},${t[3]},0,0)`;
+    sideEl.querySelector('.textLayer').appendChild(s);
+  });
+}
 
-      await page.render({ canvasContext:ctx, viewport:rvp }).promise;
+function syncArrows(){
+  prevBtn.hidden = current<=1;
+  nextBtn.hidden = current>=numPages;
+}
 
-      const text=await page.getTextContent();
-      text.items.forEach((item)=>{
-        const span=document.createElement("span"); span.textContent=item.str;
-        const t=item.transform; const fontH=Math.hypot(t[2],t[3]); const x=t[4], y=t[5];
-        const [a,b,c,d,e,f]=rvp.transform; const cssX=a*x+c*y+e; const cssY=b*x+d*y+f;
-        span.style.left=cssX+"px"; span.style.top=(cssY-fontH)+"px"; span.style.fontSize=fontH+"px";
-        span.style.transform=`matrix(${t[0]},${t[1]},${t[2]},${t[3]},0,0)`; textLayer.appendChild(span);
-      });
+async function goNext(){
+  if (current>=numPages) return;
+  // animate right page flipping left
+  right.classList.add('flip-right');
+  right.querySelector('.edge-shadow.right').style.opacity = 1;
+  await new Promise(r=>setTimeout(r, 0.66*parseInt(getComputedStyle(document.documentElement).getPropertyValue('--flip-ms'))));
+  current++;
+  await renderSpread();
+  right.classList.remove('flip-right');
+  right.querySelector('.edge-shadow.right').style.opacity = 0;
+}
 
-      el.style.width=w+"px"; el.style.height=h+"px";
-    }
+async function goPrev(){
+  if (current<=1) return;
+  // animate left page flipping right
+  left.classList.add('flip-left');
+  left.querySelector('.edge-shadow.left').style.opacity = 1;
+  await new Promise(r=>setTimeout(r, 0.66*parseInt(getComputedStyle(document.documentElement).getPropertyValue('--flip-ms'))));
+  current--;
+  await renderSpread();
+  left.classList.remove('flip-left');
+  left.querySelector('.edge-shadow.left').style.opacity = 0;
+}
 
-    function computeFlipbookSize(pdfW,pdfH){
-      const cw=$container.innerWidth(), ch=$container.innerHeight();
-      const bookAspect=(pdfW*2)/pdfH;
-      let bookW=cw*0.92, bookH=bookW/bookAspect;
-      if(bookH>ch*0.92){ bookH=ch*0.92; bookW=bookH*bookAspect; }
-      const pageW=bookW/2, pageH=bookH;
-      return { bookWidth:Math.floor(bookW), bookHeight:Math.floor(bookH), pageWidth:Math.floor(pageW), pageHeight:Math.floor(pageH) };
-    }
+async function renderSpread(){
+  const l = Math.max(1, current-1);
+  const r = Math.min(numPages, current);
+  await renderPage(l, left);
+  await renderPage(r, right);
+  syncArrows();
+}
 
-    function initTurn(bookW,bookH){
-      if (typeof jQuery.fn.turn !== "function") {
-        throw new Error("Turn.js failed to load (./lib/turn.min.js).");
-      }
-      $book.turn({ width:bookW, height:bookH, autoCenter:true, acceleration:true, gradients:true, elevation:60, duration:900 });
+window.addEventListener('resize', ()=>{ computeSizes(); });
 
-      function syncArrows(){ const total=$book.turn("pages"), cur=$book.turn("page"); $prev.attr("hidden",cur<=1); $next.attr("hidden",cur>=total); }
-      $book.on("turned", syncArrows); syncArrows();
+document.addEventListener('keydown', (e)=>{
+  if (e.key==='ArrowRight') goNext();
+  if (e.key==='ArrowLeft')  goPrev();
+});
+right.addEventListener('click', goNext);
+left.addEventListener('click', goPrev);
+prevBtn.addEventListener('click', goPrev);
+nextBtn.addEventListener('click', goNext);
 
-      $prev.on("click", ()=> $book.turn("previous"));
-      $next.on("click", ()=> $book.turn("next"));
-
-      document.addEventListener("keydown",(e)=>{ if(e.key==="ArrowLeft") $book.turn("previous"); if(e.key==="ArrowRight") $book.turn("next"); });
-      $book.on("click",(e)=>{ const r=$book[0].getBoundingClientRect(); const x=e.clientX-r.left; (x<r.width/2)?$book.turn("previous"):$book.turn("next"); });
-
-      window.addEventListener("resize", debounce(async()=>{
-        const pdfW=Number($book.data("pdfPageW")||1000), pdfH=Number($book.data("pdfPageH")||1414);
-        const s=computeFlipbookSize(pdfW,pdfH); $book.turn("size", s.bookWidth, s.bookHeight); await renderVisiblePages();
-      },200));
-    }
-
-    function debounce(fn,wait){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn.apply(null,a),wait); }; }
-
-    async function renderVisiblePages(){
-      const total=$book.turn("pages"), cur=$book.turn("page");
-      const set=new Set([cur,cur-1,cur+1,cur+2].filter(n=>n>=1&&n<=total));
-      for(const n of set){ await ensurePageRendered(n); }
-    }
-
-    const rendered=new Set();
-    async function ensurePageRendered(n){
-      if(rendered.has(n)) return;
-      const el=$book.turn("view",n).filter(Boolean)[0] || document.querySelector(`.page[data-page-index="${n-1}"]`);
-      if(!el) return; const pdf=$book.data("pdfRef"); if(!pdf) return;
-      await renderPdfPage(pdf,n,el); rendered.add(n);
-    }
-
-    async function loadFromSinglePdf(url){
-      const pdf=await pdfjsLib.getDocument({ url, withCredentials:false }).promise;
-      const first=await pdf.getPage(1), vp=first.getViewport({ scale:1 });
-      const { bookWidth, bookHeight, pageWidth, pageHeight } = computeFlipbookSize(vp.width,vp.height);
-
-      const frag=document.createDocumentFragment();
-      for(let i=0;i<pdf.numPages;i++){ const page=createPageShell(i); page.style.width=pageWidth+"px"; page.style.height=pageHeight+"px"; frag.appendChild(page); }
-      $book.append(frag);
-
-      $book.data("pdfRef", pdf); $book.data("pdfPageW", vp.width); $book.data("pdfPageH", vp.height);
-      initTurn(bookWidth, bookHeight);
-
-      await renderVisiblePages(); await ensurePageRendered(3); await ensurePageRendered(4);
-      $book.trigger("turned"); $("#nextBtn").removeAttr("hidden");
-    }
-
-    (async function init(){
-      try{
-        await loadFromSinglePdf(PDF_SINGLE_URL);
-      }catch(err){
-        console.error(err);
-        const msg=document.createElement("div");
-        msg.style.cssText="color:#900;font:14px/1.5 system-ui;padding:16px;background:rgba(255,255,255,.8);border:1px solid #f6dcdc;border-radius:12px;";
-        msg.textContent="Flipbook failed to initialize. Open the console for details.";
-        document.querySelector("#book-container").appendChild(msg);
-      }
-    })();
-  </script>
+(async function init(){
+  try{
+    pdf = await pdfjsLib.getDocument({ url: PDF_URL, withCredentials:false }).promise;
+    numPages = pdf.numPages;
+    await renderSpread();
+  }catch(err){
+    console.error(err);
+    const msg=document.createElement('div');
+    msg.style.cssText="color:#900;font:14px/1.5 system-ui;padding:16px;background:rgba(255,255,255,.8);border:1px solid #f6dcdc;border-radius:12px;";
+    msg.textContent="Flipbook failed to initialize. Open the console for details.";
+    book.appendChild(msg);
+  }
+})();
+</script>
 </body>
 </html>
